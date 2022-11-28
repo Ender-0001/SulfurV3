@@ -102,7 +102,7 @@ struct FUObjectArray
 	}
 };
 
-inline void* (*FMemory_Realloc)(void* Memory, __int64 NewSize, unsigned int Alignment);
+inline void* (*FMemory_Realloc)(void* Memory, __int64 NewSize, unsigned int Alignment) = decltype(FMemory_Realloc)((uintptr_t)GetModuleHandle(0) + 0x2093D50);
 
 template<class T>
 struct TArray
@@ -228,8 +228,8 @@ struct FString : TArray<wchar_t>
 	}
 };
 
-inline void (*FNameToString)(void*, FString&);
-inline void (*FreeMemory)(void*);
+inline void (*FNameToString)(void*, FString&) = decltype(FNameToString)((uintptr_t)GetModuleHandle(0) + 0x215F700);
+inline void (*FreeMemory)(void*) = decltype(FreeMemory)((uintptr_t)GetModuleHandle(0) + 0x2084780);
 
 struct FName
 {

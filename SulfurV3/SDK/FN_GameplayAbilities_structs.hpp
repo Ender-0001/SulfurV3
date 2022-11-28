@@ -480,6 +480,13 @@ struct FAttributeDefaults
 struct FGameplayAbilitySpecHandle
 {
 	int                                                Handle;                                                   // 0x0000(0x0004) (ZeroConstructor, IsPlainOldData, NoDestructor, HasGetValueTypeHash, NativeAccessSpecifierPrivate)
+
+	void GenerateNewHandle() // weird
+	{
+		// Must be in C++ to avoid duplicate statics across execution units
+		static int32_t GHandle = 1;
+		Handle = GHandle++;
+	}
 };
 
 // ScriptStruct GameplayAbilities.PredictionKey

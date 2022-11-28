@@ -35,7 +35,7 @@ namespace Hooks
 		if (auto FortPlayerController = Cast<AFortPlayerControllerAthena>(PlayerController))
 			Game::HandlePlayer(FortPlayerController);
 
-		Native::HandleNewStartingPlayer(a1, PlayerController);
+		return Native::HandleNewStartingPlayer(a1, PlayerController);
 	}
 
 	static void Init()

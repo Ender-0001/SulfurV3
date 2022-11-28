@@ -8,7 +8,11 @@ namespace Game
 		auto GameMode = Cast<AFortGameModeAthena>(GetWorld()->AuthorityGameMode);
 		auto GameState = Cast<AFortGameStateAthena>(GetWorld()->GameState);
 
-		GameState->CurrentPlaylistInfo.BasePlaylist = UObject::FindObject<UFortPlaylistAthena>("Playlist_DefaultSolo", ANY_PACKAGE);
+		UFortPlaylistAthena* Playlist = UObject::FindObject<UFortPlaylistAthena>("/Game/Athena/Playlists/Playlist_DefaultSolo.Playlist_DefaultSolo");
+		std::cout << "Playlist: " << Playlist << '\n';
+
+		GameState->CurrentPlaylistInfo.BasePlaylist = Playlist;
+		GameState->CurrentPlaylistInfo.OverridePlaylist = Playlist;
 
 		GameState->OnRep_CurrentPlaylistInfo();
 		GameState->CurrentPlaylistInfo.PlaylistReplicationKey++;
@@ -46,7 +50,6 @@ namespace Game
 	{
 		auto PlayerState = Cast<AFortPlayerStateAthena>(PlayerController->PlayerState);
 		auto GameMode = Cast<AFortGameModeAthena>(GetWorld()->AuthorityGameMode);
-		auto GameState = Cast<AFortGameStateAthena>(GetWorld()->GameState);
 
 		PlayerController->OverriddenBackpackSize = 5;
 
@@ -57,6 +60,73 @@ namespace Game
 		PlayerState->bHasFinishedLoading = true;
 		PlayerState->bHasStartedPlaying = true;
 		PlayerState->OnRep_bHasStartedPlaying();
+
+		static auto BuildingItemData_Wall = UObject::FindObject<UFortBuildingItemDefinition>(("/Game/Items/Weapons/BuildingTools/BuildingItemData_Wall.BuildingItemData_Wall"));
+		static auto BuildingItemData_Floor = UObject::FindObject<UFortBuildingItemDefinition>(("/Game/Items/Weapons/BuildingTools/BuildingItemData_Floor.BuildingItemData_Floor"));
+		static auto BuildingItemData_Stair_W = UObject::FindObject<UFortBuildingItemDefinition>(("/Game/Items/Weapons/BuildingTools/BuildingItemData_Stair_W.BuildingItemData_Stair_W"));
+		static auto BuildingItemData_RoofS = UObject::FindObject<UFortBuildingItemDefinition>(("/Game/Items/Weapons/BuildingTools/BuildingItemData_RoofS.BuildingItemData_RoofS"));
+		static auto EditTool = UObject::FindObject<UFortEditToolItemDefinition>("/Game/Items/Weapons/BuildingTools/EditTool.EditTool");
+		static auto Pickaxe = UObject::FindObject<UFortWeaponMeleeItemDefinition>("/Game/Athena/Items/Weapons/WID_Harvest_Pickaxe_Athena_C_T01.WID_Harvest_Pickaxe_Athena_C_T01");
+		
+		Util::GiveItem(PlayerController, BuildingItemData_Wall, 1);
+		Util::GiveItem(PlayerController, BuildingItemData_Floor, 1);
+		Util::GiveItem(PlayerController, BuildingItemData_Stair_W, 1);
+		Util::GiveItem(PlayerController, BuildingItemData_RoofS, 1);
+		Util::GiveItem(PlayerController, EditTool, 1);
+		Util::GiveItem(PlayerController, Pickaxe, 1);
+
+		static auto WoodItemData = UObject::FindObject<UFortResourceItemDefinition>("/Game/Items/ResourcePickups/WoodItemData.WoodItemData");
+
+		Util::GiveItem(PlayerController, WoodItemData, 999);
+	}
+
+	static void ServerLoadingScreenDroppedHook(AFortPlayerControllerAthena* PlayerController) // TODO: Move this
+	{
+		if (auto Pawn = Cast<AFortPlayerPawnAthena>(PlayerController->Pawn))
+		{
+			static auto HeadPart = UObject::FindObject<UCustomCharacterPart>("/Game/Characters/CharacterParts/Female/Medium/Heads/F_Med_Head1.F_Med_Head1");
+			static auto BodyPart = UObject::FindObject<UCustomCharacterPart>("/Game/Characters/CharacterParts/Female/Medium/Bodies/F_Med_Soldier_01.F_Med_Soldier_01");
+
+			Pawn->ServerChoosePart(EFortCustomPartType::Head, HeadPart);
+			Pawn->ServerChoosePart(EFortCustomPartType::Body, BodyPart);
+
+			static auto GameplayAbilitySet = UObject::FindObject<UFortAbilitySet>("/Game/Abilities/Player/Generic/Traits/DefaultPlayer/GAS_AthenaPlayer.GAS_AthenaPlayer");
+
+			for (int i = 0; i < GameplayAbilitySet->GameplayAbilities.Num(); i++)
+			{
+				UClass* AbilityClass = GameplayAbilitySet->GameplayAbilities[i];
+				UGameplayAbility* AbilityDefaultObject = (UGameplayAbility*)AbilityClass->CreateDefaultObject();
+
+				/*bool bIsDuplicateAbility = false;
+
+				for (int j = 0; i < Pawn->AbilitySystemComponent->ActivatableAbilities.Items.Num(); j++) // TODO: Check if this is needed
+				{
+					auto& ActivatableAbility = Pawn->AbilitySystemComponent->ActivatableAbilities.Items[j];
+
+					if (ActivatableAbility.Ability == AbilityDefaultObject)
+					{
+						bIsDuplicateAbility = true;
+						break;
+					}
+				}
+
+				if (bIsDuplicateAbility)
+					continue; */
+
+				FGameplayAbilitySpecHandle Handle{};
+				Handle.GenerateNewHandle();
+
+				FGameplayAbilitySpec Spec{ -1, -1, -1 };
+				Spec.Ability = AbilityDefaultObject;
+				Spec.Level = -1;
+				Spec.InputID = -1;
+				Spec.Handle = Handle;
+
+				Native::GiveAbility(Pawn->AbilitySystemComponent, &Handle, Spec);
+			}
+		}
+
+		return Native::ServerLoadingScreenDropped(PlayerController);
 	}
 
 	static void ServerAcknowledgePossessionHook(APlayerController* PlayerController, APawn* P)
@@ -69,7 +139,28 @@ namespace Game
 		if (PlayerController->IsInAircraft())
 			return;
 
+		AFortPlayerPawnAthena* Pawn = Cast<AFortPlayerPawnAthena>(PlayerController->Pawn);
 
+		if (!Pawn)
+			return;
+
+		FFortItemList& Inventory = PlayerController->WorldInventory->Inventory;
+
+		TArray<UFortWorldItem*>& ItemInstances = Inventory.ItemInstances;
+
+		for (int i = 0; i < ItemInstances.Num(); i++)
+		{
+			auto ItemInstance = ItemInstances[i];
+
+			if (ItemInstance->ItemEntry.ItemGuid == ItemGuid)
+			{
+				// UFortWeaponItemDefinition* WeaponDefinition = Cast<UFortWeaponItemDefinition>(ItemInstance->ItemEntry.ItemDefinition);
+				UFortWeaponItemDefinition* WeaponDefinition = (UFortWeaponItemDefinition*)ItemInstance->ItemEntry.ItemDefinition;
+;
+				if (WeaponDefinition)
+					Pawn->EquipWeaponDefinition(WeaponDefinition, ItemGuid);
+			}
+		}
 	}
 
 	static void ClientOnPawnDiedHook(AFortPlayerControllerAthena* PlayerController, FFortPlayerDeathReport DeathReport)
@@ -81,7 +172,7 @@ namespace Game
 		auto GameMode = Cast<AFortGameModeAthena>(GetWorld()->AuthorityGameMode);
 		auto GameState = Cast<AFortGameStateAthena>(GetWorld()->GameState);
 
-		if (GameState->GamePhase == EAthenaGamePhase::Warmup && GameState->GamePhase == EAthenaGamePhase::Aircraft)
+		if (GameState->GamePhase <= EAthenaGamePhase::Aircraft)
 			return Native::ClientOnPawnDied(PlayerController, DeathReport);
 
 		if (PlayerController && PlayerState)
@@ -229,61 +320,6 @@ namespace Game
 		if (!PlayerController->MyFortPawn || PlayerController->IsInAircraft())
 			return;
 
-		FFortItemList& Inventory = PlayerController->WorldInventory->Inventory;
-
-		TArray<UFortWorldItem*>& ItemInstances = Inventory.ItemInstances;
-		TArray<FFortItemEntry>& ReplicatedEntries = Inventory.ReplicatedEntries;
-
-		bool bWasFoundInItemInstances = false;
-
-		for (int i = 0; i < ItemInstances.Num(); i++)
-		{
-			auto ItemInstance = ItemInstances[i];
-
-			if (ItemInstance->ItemEntry.ItemGuid == ItemGuid)
-			{
-				if (ItemInstance->ItemEntry.Count - Count < 0)
-					return;
-
-				//SummonPickup(ItemInstance->ItemEntry.ItemDefinition, Count, PlayerController->MyFortPawn->K2_GetActorLocation());
-
-				ItemInstance->ItemEntry.Count -= Count;
-
-				if (ItemInstance->ItemEntry.Count == 0)
-				{
-					ItemInstances.Remove(i);
-				}
-
-				bWasFoundInItemInstances = true;
-
-				break;
-			}
-		}
-
-		if (!bWasFoundInItemInstances)
-			return;
-
-		for (int i = 0; i < ReplicatedEntries.Num(); i++)
-		{
-			FFortItemEntry ReplicatedEntry = ReplicatedEntries[i];
-
-			if (ReplicatedEntry.ItemGuid == ItemGuid)
-			{				
-				ReplicatedEntry.Count -= Count;
-
-				if (ReplicatedEntry.Count == 0)
-				{
-					ReplicatedEntries.Remove(i);
-					Inventory.MarkArrayDirty();
-				}
-				else
-				{
-					Inventory.MarkItemDirty(ReplicatedEntry);
-				}
-
-				break;
-			}
-		}
 	}
 
 	static void ServerTryActivateAbilityHook(UAbilitySystemComponent* AbilitySystemComponent, FGameplayAbilitySpecHandle Handle, bool InputPressed, FPredictionKey PredictionKey)
@@ -296,16 +332,49 @@ namespace Game
 		Util::ActivateAbility(AbilitySystemComponent, Handle, PredictionKey, &TriggerEventData);
 	}
 
-	static void RestartPlayerAtPlayerStartHook(AGameMode* GameMode, APlayerController* PlayerController, __int64 a3)
+	static void RestartPlayerAtPlayerStartHook(AGameMode* GameMode, APlayerController* PlayerController, AActor* StartSpot)
 	{
-		FTransform Transform;
-		Transform.Translation = ((AActor*)a3)->K2_GetActorLocation();
+		FTransform Transform{};
+		Transform.Translation = StartSpot->K2_GetActorLocation();
 		Transform.Scale3D = { 1,1,1 };
 
 		GameMode->RestartPlayerAtTransform(PlayerController, Transform);
+	}
 
-		if (auto Pawn = Cast<AFortPlayerPawnAthena>(PlayerController->Pawn))
-			Native::GrantAbilities(Pawn);
+	static void ServerCreateBuildingActorHook(AFortPlayerControllerAthena* PlayerController, FCreateBuildingActorData CreateBuildingData)
+	{
+		UClass* BuildingClass = PlayerController->BroadcastRemoteClientInfo->RemoteBuildableClass;
+
+		/* static */ auto GameState = Cast<AFortGameStateAthena>(GetWorld()->GameState);
+		
+		bool bAllowedBuildingClass = false;
+
+		for (int i = 0; i < GameState->BuildingActorClasses.Num(); i++)
+		{
+			auto CurrentClass = GameState->BuildingActorClasses[i];
+
+			if (CurrentClass == BuildingClass)
+			{
+				bAllowedBuildingClass = true;
+				break;
+			}
+		}
+
+		if (!bAllowedBuildingClass)
+			return;
+
+		FVector BuildingLocation = CreateBuildingData.BuildLoc;
+		FRotator BuildingRotation = CreateBuildingData.BuildRot;
+		bool bMirrored = CreateBuildingData.bMirrored;
+
+		__int64 v32[2]{};
+		char a;
+
+		if (!Native::CantBuild(GetWorld(), BuildingClass, BuildingLocation, BuildingRotation, bMirrored, v32, &a))
+		{
+			ABuildingSMActor* NewBuildingActor = GetWorld()->SpawnActor<ABuildingSMActor>(BuildingLocation, BuildingRotation, BuildingClass);
+			NewBuildingActor->InitializeKismetSpawnedBuildingActor(NewBuildingActor, PlayerController, true);
+		}
 	}
 
 	static void Init()
@@ -319,6 +388,9 @@ namespace Game
 		Util::BindHook(DefaultFortPCAthena, 264, ServerAcknowledgePossessionHook, nullptr);
 		Util::BindHook(DefaultFortPCAthena, 510, ServerExecuteInventoryItemHook, nullptr);
 		Util::BindHook(DefaultFortPCAthena, 529, ServerAttemptInventoryDropHook, nullptr);
+		Util::BindHook(DefaultFortPCAthena, 548, ServerCreateBuildingActorHook, nullptr);
+		// Util::BindHook(DefaultFortPCAthena, 604, ServerReadyToStartMatchHook, nullptr);
+		Util::BindHook(DefaultFortPCAthena, 606, ServerLoadingScreenDroppedHook, (PVOID*)&Native::ServerLoadingScreenDropped);
 		Util::BindHook(DefaultFortPawnAthena, 455, ServerHandlePickupHook, nullptr);
 		Util::BindHook(DefaultFortAbilitySystemComp, 141, ServerTryActivateAbilityHook, nullptr);
 		Util::BindHook(DefaultFortAbilitySystemComp, 139, ServerTryActivateAbilityWithEventDataHook, nullptr);

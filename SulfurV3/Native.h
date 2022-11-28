@@ -33,10 +33,14 @@ namespace Native
 	static void (*HandleNewStartingPlayer)(__int64, APlayerController*) =
 		decltype(HandleNewStartingPlayer)((uintptr_t)GetModuleHandle(0) + 0x3543090);
 
-	static void (*RestartPlayerAtPlayerStart)(AGameMode*, APlayerController*, __int64) =
+	static void (*RestartPlayerAtPlayerStart)(AGameMode*, APlayerController*, AActor*) =
 		decltype(RestartPlayerAtPlayerStart)((uintptr_t)GetModuleHandle(0) + 0x30BAAE0);
 
-	static void (*GrantAbilities)(AFortPlayerPawnAthena*) =
-		decltype(GrantAbilities)((uintptr_t)GetModuleHandle(0) + 0x192D570);
+	static FGameplayAbilitySpecHandle* (*GiveAbility)(UAbilitySystemComponent*, FGameplayAbilitySpecHandle*, FGameplayAbilitySpec) =
+		decltype(GiveAbility)((uintptr_t)GetModuleHandle(0) + 0x935010);
 
+	static __int64 (*CantBuild)(UWorld*, UClass*, FVector, FRotator, char, void*, char*) =
+		decltype(CantBuild)((uintptr_t)GetModuleHandle(0) + 0x1601820);
+
+	static void (*ServerLoadingScreenDropped)(AFortPlayerControllerAthena*);
 }

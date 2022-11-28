@@ -108,6 +108,111 @@ namespace Util
         return true;
     }
 
+    static void Update(AFortPlayerControllerAthena* PlayerController, bool bMarkArrayDirty = true) // TODO: Add the quickbar to update?
+    {
+        FFortItemList& Inventory = PlayerController->WorldInventory->Inventory;
+
+        if (bMarkArrayDirty)
+            Inventory.MarkArrayDirty();
+
+        PlayerController->WorldInventory->HandleInventoryLocalUpdate();
+
+        PlayerController->ClientForceUpdateQuickbar(EFortQuickBars::Primary);
+        PlayerController->ClientForceUpdateQuickbar(EFortQuickBars::Secondary);
+    }
+
+    static void SummonPickup(AFortPawn* Pawn, UFortWorldItemDefinition* ItemDefinition, int Count, const FVector& Location, EFortPickupSourceTypeFlag SourceFlag, EFortPickupSpawnSource SpawnSource)
+    {
+        auto Pickup = GetWorld()->SpawnActor<AFortPickupAthena>(Location, FRotator());
+
+        Pickup->PrimaryPickupItemEntry.ItemDefinition = ItemDefinition;
+        Pickup->PrimaryPickupItemEntry.Count = Count;
+
+        if (Pawn)
+            Pickup->TossPickup(Location, Pawn, 0, true, SourceFlag, SpawnSource);
+
+        Pickup->SetReplicateMovement(true);
+        Pickup->MovementComponent = (UProjectileMovementComponent*)UGameplayStatics::SpawnObject(UProjectileMovementComponent::StaticClass(), Pickup);
+    }
+
+    static void RemoveItem(AFortPlayerControllerAthena* PlayerController, const FGuid& ItemGuid, int Count)
+    {
+        FFortItemList& Inventory = PlayerController->WorldInventory->Inventory;
+
+        TArray<UFortWorldItem*>& ItemInstances = Inventory.ItemInstances;
+        TArray<FFortItemEntry>& ReplicatedEntries = Inventory.ReplicatedEntries;
+
+        bool bWasFoundInItemInstances = false;
+
+        for (int i = 0; i < ItemInstances.Num(); i++)
+        {
+            auto ItemInstance = ItemInstances[i];
+
+            if (ItemInstance->ItemEntry.ItemGuid == ItemGuid)
+            {
+                if (ItemInstance->ItemEntry.Count - Count < 0)
+                    return;
+
+                // SummonPickup(ItemInstance->ItemEntry.ItemDefinition, Count, PlayerController->MyFortPawn->K2_GetActorLocation());
+
+                ItemInstance->ItemEntry.Count -= Count;
+
+                if (ItemInstance->ItemEntry.Count == 0)
+                {
+                    ItemInstances.Remove(i);
+                }
+
+                bWasFoundInItemInstances = true;
+
+                break;
+            }
+        }
+
+        if (!bWasFoundInItemInstances)
+            return;
+
+        for (int i = 0; i < ReplicatedEntries.Num(); i++)
+        {
+            FFortItemEntry ReplicatedEntry = ReplicatedEntries[i];
+
+            if (ReplicatedEntry.ItemGuid == ItemGuid)
+            {
+                ReplicatedEntry.Count -= Count;
+
+                if (ReplicatedEntry.Count == 0)
+                {
+                    ReplicatedEntries.Remove(i);
+                    Inventory.MarkArrayDirty();
+                }
+                else
+                {
+                    Inventory.MarkItemDirty(ReplicatedEntry);
+                }
+
+                break;
+            }
+        }
+    }
+
+    static UFortWorldItem* GiveItem(AFortPlayerControllerAthena* PlayerController, UFortWorldItemDefinition* ItemDefinition, int Count)
+    {
+        FFortItemList& Inventory = PlayerController->WorldInventory->Inventory;
+
+        TArray<UFortWorldItem*>& ItemInstances = Inventory.ItemInstances;
+        TArray<FFortItemEntry>& ReplicatedEntries = Inventory.ReplicatedEntries;
+
+        UFortWorldItem* FortItem = (UFortWorldItem*)ItemDefinition->CreateTemporaryItemInstanceBP(Count, 1);
+
+        FortItem->SetOwningControllerForTemporaryItem(PlayerController);
+
+        ItemInstances.Add(FortItem);
+        ReplicatedEntries.Add(FortItem->ItemEntry);
+
+        Update(PlayerController);
+
+        return FortItem;
+    }
+
     static void SinCos(float* ScalarSin, float* ScalarCos, float  Value)
     {
         // Map Value to y in [-pi,pi], x = 2*pi*quotient + remainder.
