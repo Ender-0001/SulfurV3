@@ -38,11 +38,30 @@ namespace Hooks
 		return Native::HandleNewStartingPlayer(a1, PlayerController);
 	}
 
+	static char CanActivateAbilityHook()
+	{
+		return 1;
+	}
+
+	static __int64 GetNetModeHook(__int64)
+	{
+		return ((uintptr_t)_ReturnAddress() - (uintptr_t)GetModuleHandle(0)) == 0x15d0385 ? 2 : 1;
+	}
+
+	static char IsDedicatedServerHook()
+	{
+		return true;
+	}
+
 	static void Init()
 	{
 		CREATE_HOOK(ReadyToStartMatchHook, Native::ReadyToStartMatch);
 		CREATE_HOOK(TickFlushHook, Native::TickFlush);
 		CREATE_HOOK(KickPlayerHook, Native::KickPlayer);
 		CREATE_HOOK(HandleNewStartingPlayerHook, Native::HandleNewStartingPlayer);
+		CREATE_HOOK(CanActivateAbilityHook, Native::CanActivateAbility);
+		CREATE_HOOK(GetNetModeHook, Native::GetNetMode_World);
+		CREATE_HOOK(GetNetModeHook, Native::GetNetMode_Actor);
+		CREATE_HOOK(IsDedicatedServerHook, Native::IsDedicatedServer);
 	}
 }

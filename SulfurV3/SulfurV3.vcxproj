@@ -152,6 +152,7 @@
     <ClInclude Include="framework.h" />
     <ClInclude Include="Game.h" />
     <ClInclude Include="Hooks.h" />
+    <ClInclude Include="Inventory.h" />
     <ClInclude Include="Native.h" />
     <ClInclude Include="Util.h" />
   </ItemGroup>

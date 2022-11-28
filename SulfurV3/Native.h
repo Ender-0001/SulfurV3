@@ -43,4 +43,28 @@ namespace Native
 		decltype(CantBuild)((uintptr_t)GetModuleHandle(0) + 0x1601820);
 
 	static void (*ServerLoadingScreenDropped)(AFortPlayerControllerAthena*);
-}
+
+	static void (*Array_Remove)(void* Array, UProperty*, int) =
+		decltype(Array_Remove)((uintptr_t)GetModuleHandle(0) + 0x312C110);
+
+	static __int64 (*OnSafeZoneStateChange)(AFortSafeZoneIndicator* SafeZoneIndicator, char a2, char a3) =
+		decltype(OnSafeZoneStateChange)((uintptr_t)GetModuleHandle(0) + 0x1F83F10);
+
+	static char (*CanActivateAbility)(__int64 a1, unsigned int a2, int* a3, __int64 a4, __int64 a5, void* a6) =
+		decltype(CanActivateAbility)((uintptr_t)GetModuleHandle(0) + 0x9214C0);
+
+	static ABuildingSMActor* (*BuildingSMActorReplaceBuildingActor)(ABuildingSMActor*, __int64, UClass*, int, int, uint8_t, AFortPlayerController*) =
+		decltype(BuildingSMActorReplaceBuildingActor)((uintptr_t)GetModuleHandle(0) + 0x13D0DE0);
+
+	static void (*GetNetMode_World)(UWorld*) =
+		decltype(GetNetMode_World)((uintptr_t)GetModuleHandle(0) + 0x34D2140);
+
+	static void (*GetNetMode_Actor)(AActor*) =
+		decltype(GetNetMode_Actor)((uintptr_t)GetModuleHandle(0) + 0x2E3E970);
+
+	static char (*IsDedicatedServer)() = 
+		decltype(IsDedicatedServer)((uintptr_t)GetModuleHandle(0) + 0x3132CE0);
+
+	static void (*ServerAttemptInteract)(UFortControllerComponent_Interaction* InteractionComp, AActor* ReceivingActor, __int64* a3, __int64 a4, unsigned int a5, __int64 a6) =
+		decltype(ServerAttemptInteract)((uintptr_t)GetModuleHandle(0) + );
+ }

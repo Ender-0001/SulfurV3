@@ -44,7 +44,7 @@ static __forceinline T* Cast(UObject* Object)
 
 #include "Native.h"
 #include "Util.h"
-/*#include "Inventory.h"
-#include "Looting.h"*/
+#include "Inventory.h"
+//#include "Looting.h"
 #include "Game.h"
 #include "Hooks.h"

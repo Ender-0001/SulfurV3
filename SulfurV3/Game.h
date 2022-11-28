@@ -9,7 +9,6 @@ namespace Game
 		auto GameState = Cast<AFortGameStateAthena>(GetWorld()->GameState);
 
 		UFortPlaylistAthena* Playlist = UObject::FindObject<UFortPlaylistAthena>("/Game/Athena/Playlists/Playlist_DefaultSolo.Playlist_DefaultSolo");
-		std::cout << "Playlist: " << Playlist << '\n';
 
 		GameState->CurrentPlaylistInfo.BasePlaylist = Playlist;
 		GameState->CurrentPlaylistInfo.OverridePlaylist = Playlist;
@@ -39,8 +38,6 @@ namespace Game
 		Native::InitListen(GetWorld()->NetDriver, GetWorld(), URL, true, Error);
 		Native::SetWorld(GetWorld()->NetDriver, GetWorld());
 
-		// Native::ServerReplicateActors = decltype(Native::ServerReplicateActors)(GetWorld()->NetDriver->ReplicationDriver->VFT[0x56]);
-
 		GetWorld()->NetDriver = GetWorld()->NetDriver;
 		GetWorld()->LevelCollections[0].NetDriver = GetWorld()->NetDriver;
 		GetWorld()->LevelCollections[1].NetDriver = GetWorld()->NetDriver;
@@ -61,23 +58,24 @@ namespace Game
 		PlayerState->bHasStartedPlaying = true;
 		PlayerState->OnRep_bHasStartedPlaying();
 
-		static auto BuildingItemData_Wall = UObject::FindObject<UFortBuildingItemDefinition>(("/Game/Items/Weapons/BuildingTools/BuildingItemData_Wall.BuildingItemData_Wall"));
-		static auto BuildingItemData_Floor = UObject::FindObject<UFortBuildingItemDefinition>(("/Game/Items/Weapons/BuildingTools/BuildingItemData_Floor.BuildingItemData_Floor"));
-		static auto BuildingItemData_Stair_W = UObject::FindObject<UFortBuildingItemDefinition>(("/Game/Items/Weapons/BuildingTools/BuildingItemData_Stair_W.BuildingItemData_Stair_W"));
-		static auto BuildingItemData_RoofS = UObject::FindObject<UFortBuildingItemDefinition>(("/Game/Items/Weapons/BuildingTools/BuildingItemData_RoofS.BuildingItemData_RoofS"));
-		static auto EditTool = UObject::FindObject<UFortEditToolItemDefinition>("/Game/Items/Weapons/BuildingTools/EditTool.EditTool");
-		static auto Pickaxe = UObject::FindObject<UFortWeaponMeleeItemDefinition>("/Game/Athena/Items/Weapons/WID_Harvest_Pickaxe_Athena_C_T01.WID_Harvest_Pickaxe_Athena_C_T01");
-		
-		Util::GiveItem(PlayerController, BuildingItemData_Wall, 1);
-		Util::GiveItem(PlayerController, BuildingItemData_Floor, 1);
-		Util::GiveItem(PlayerController, BuildingItemData_Stair_W, 1);
-		Util::GiveItem(PlayerController, BuildingItemData_RoofS, 1);
-		Util::GiveItem(PlayerController, EditTool, 1);
-		Util::GiveItem(PlayerController, Pickaxe, 1);
-
-		static auto WoodItemData = UObject::FindObject<UFortResourceItemDefinition>("/Game/Items/ResourcePickups/WoodItemData.WoodItemData");
-
-		Util::GiveItem(PlayerController, WoodItemData, 999);
+		Inventory::AddItem(PlayerController, UObject::FindObject<UFortItemDefinition>("/Game/Athena/Items/Weapons/WID_Harvest_Pickaxe_Athena_C_T01.WID_Harvest_Pickaxe_Athena_C_T01"), 1);
+		Inventory::AddItem(PlayerController, UObject::FindObject<UFortItemDefinition>("/Game/Items/Weapons/BuildingTools/BuildingItemData_Wall.BuildingItemData_Wall"), 1);
+		Inventory::AddItem(PlayerController, UObject::FindObject<UFortItemDefinition>("/Game/Items/Weapons/BuildingTools/BuildingItemData_Floor.BuildingItemData_Floor"), 1);
+		Inventory::AddItem(PlayerController, UObject::FindObject<UFortItemDefinition>("/Game/Items/Weapons/BuildingTools/BuildingItemData_Stair_W.BuildingItemData_Stair_W"), 1);
+		Inventory::AddItem(PlayerController, UObject::FindObject<UFortItemDefinition>("/Game/Items/Weapons/BuildingTools/BuildingItemData_RoofS.BuildingItemData_RoofS"), 1);
+		Inventory::AddItem(PlayerController, UObject::FindObject<UFortItemDefinition>("/Game/Items/ResourcePickups/WoodItemData.WoodItemData"), 500);
+		Inventory::AddItem(PlayerController, UObject::FindObject<UFortItemDefinition>("/Game/Items/ResourcePickups/StoneItemData.StoneItemData"), 300);
+		Inventory::AddItem(PlayerController, UObject::FindObject<UFortItemDefinition>("/Game/Items/ResourcePickups/MetalItemData.MetalItemData"), 100);
+		Inventory::AddItem(PlayerController, UObject::FindObject<UFortItemDefinition>("/Game/Athena/Items/Weapons/WID_Shotgun_Standard_Athena_SR_Ore_T03.WID_Shotgun_Standard_Athena_SR_Ore_T03"), 1);
+		Inventory::AddItem(PlayerController, UObject::FindObject<UFortItemDefinition>("/Game/Athena/Items/Weapons/WID_Assault_AutoHigh_Athena_SR_Ore_T03.WID_Assault_AutoHigh_Athena_SR_Ore_T03"), 1);
+		Inventory::AddItem(PlayerController, UObject::FindObject<UFortItemDefinition>("/Game/Athena/Items/Weapons/WID_Pistol_AutoHeavyPDW_Athena_R_Ore_T03.WID_Pistol_AutoHeavyPDW_Athena_R_Ore_T03"), 1);
+		Inventory::AddItem(PlayerController, UObject::FindObject<UFortItemDefinition>("/Game/Athena/Items/Consumables/ShieldSmall/Athena_ShieldSmall.Athena_ShieldSmall"), 6);
+		Inventory::AddItem(PlayerController, UObject::FindObject<UFortItemDefinition>("/Game/Items/ResourcePickups/WoodItemData.WoodItemData"), 999);
+		Inventory::AddItem(PlayerController, UObject::FindObject<UFortItemDefinition>("/Game/Athena/Items/Ammo/AthenaAmmoDataShells.AthenaAmmoDataShells"), 999);
+		Inventory::AddItem(PlayerController, UObject::FindObject<UFortItemDefinition>("/Game/Athena/Items/Ammo/AthenaAmmoDataBulletsMedium.AthenaAmmoDataBulletsMedium"), 999);
+		Inventory::AddItem(PlayerController, UObject::FindObject<UFortItemDefinition>("/Game/Athena/Items/Ammo/AthenaAmmoDataBulletsLight.AthenaAmmoDataBulletsLight"), 999);
+		Inventory::AddItem(PlayerController, UObject::FindObject<UFortItemDefinition>("/Game/Athena/Items/Ammo/AthenaAmmoDataBulletsHeavy.AthenaAmmoDataBulletsHeavy"), 999);
+		Inventory::Update(PlayerController);
 	}
 
 	static void ServerLoadingScreenDroppedHook(AFortPlayerControllerAthena* PlayerController) // TODO: Move this
@@ -96,22 +94,6 @@ namespace Game
 			{
 				UClass* AbilityClass = GameplayAbilitySet->GameplayAbilities[i];
 				UGameplayAbility* AbilityDefaultObject = (UGameplayAbility*)AbilityClass->CreateDefaultObject();
-
-				/*bool bIsDuplicateAbility = false;
-
-				for (int j = 0; i < Pawn->AbilitySystemComponent->ActivatableAbilities.Items.Num(); j++) // TODO: Check if this is needed
-				{
-					auto& ActivatableAbility = Pawn->AbilitySystemComponent->ActivatableAbilities.Items[j];
-
-					if (ActivatableAbility.Ability == AbilityDefaultObject)
-					{
-						bIsDuplicateAbility = true;
-						break;
-					}
-				}
-
-				if (bIsDuplicateAbility)
-					continue; */
 
 				FGameplayAbilitySpecHandle Handle{};
 				Handle.GenerateNewHandle();
@@ -136,30 +118,27 @@ namespace Game
 
 	static void ServerExecuteInventoryItemHook(AFortPlayerControllerAthena* PlayerController, FGuid ItemGuid)
 	{
-		if (PlayerController->IsInAircraft())
-			return;
-
-		AFortPlayerPawnAthena* Pawn = Cast<AFortPlayerPawnAthena>(PlayerController->Pawn);
+		auto Pawn = Cast<AFortPlayerPawnAthena>(PlayerController->Pawn);
 
 		if (!Pawn)
 			return;
 
-		FFortItemList& Inventory = PlayerController->WorldInventory->Inventory;
+		auto ItemEntry = Inventory::FindItemEntry(PlayerController, ItemGuid);
 
-		TArray<UFortWorldItem*>& ItemInstances = Inventory.ItemInstances;
+		if (!ItemEntry)
+			return;
 
-		for (int i = 0; i < ItemInstances.Num(); i++)
+		auto ItemDef = ItemEntry->ItemDefinition;
+
+		if (auto GadgetDef = Cast<UAthenaGadgetItemDefinition>(ItemDef))
+			ItemDef = GadgetDef->GetWeaponItemDefinition();
+
+		if (!ItemDef)
+			return;
+
+		if (auto Weapon = Pawn->EquipWeaponDefinition(Cast<UFortWeaponItemDefinition>(ItemDef), ItemGuid))
 		{
-			auto ItemInstance = ItemInstances[i];
-
-			if (ItemInstance->ItemEntry.ItemGuid == ItemGuid)
-			{
-				// UFortWeaponItemDefinition* WeaponDefinition = Cast<UFortWeaponItemDefinition>(ItemInstance->ItemEntry.ItemDefinition);
-				UFortWeaponItemDefinition* WeaponDefinition = (UFortWeaponItemDefinition*)ItemInstance->ItemEntry.ItemDefinition;
-;
-				if (WeaponDefinition)
-					Pawn->EquipWeaponDefinition(WeaponDefinition, ItemGuid);
-			}
+			ItemEntry->LoadedAmmo = Weapon->AmmoCount;
 		}
 	}
 
@@ -196,7 +175,7 @@ namespace Game
 				KillerPlayerState->OnRep_Kills();
 			}
 
-			/*auto DroppableItems = Inventory::GetDroppableItems(PlayerController);
+			auto DroppableItems = Inventory::GetDroppableItems(PlayerController);
 
 			for (int i = 0; i < DroppableItems.size(); i++)
 			{
@@ -220,8 +199,8 @@ namespace Game
 					}
 				}
 
-				//Looting::SpawnPickup(Item->ItemEntry, DeathInfo.DeathLocation, EFortPickupSourceTypeFlag::Player, EFortPickupSpawnSource::PlayerElimination);
-			}*/
+				Inventory::SpawnPickup(Item->ItemEntry, DeathInfo.DeathLocation, EFortPickupSourceTypeFlag::Player, EFortPickupSpawnSource::PlayerElimination);
+			}
 
 			PlayerController->bMarkedAlive = false;
 
@@ -281,45 +260,134 @@ namespace Game
 		Native::ClientOnPawnDied(PlayerController, DeathReport);
 	}
 
-	static void ServerHandlePickupHook(AFortPlayerPawnAthena* Pawn, AFortPickup* Pickup, float InFlyTime, FVector InStartDirection, bool bPlayPickupSound)
+	static void ServerHandlePickupHook(AFortPlayerPawnAthena* Pawn, AFortPickup* Pickup, float InFlyTime, FVector InStartDirection, char bPlayPickupSound)
 	{
-		if (Pickup->bPickedUp)
-			return;
+		auto PlayerController = (AFortPlayerControllerAthena*)Pawn->Controller;
 
-		AFortPlayerControllerAthena* PlayerController = (AFortPlayerControllerAthena*)Pawn->Controller;
+		if (Pickup && !Pickup->bPickedUp)
+		{
+			Pickup->bPickedUp = true;
 
-		if (PlayerController->IsInAircraft())
-			return;
+			auto ItemDef = Cast<UFortWorldItemDefinition>(Pickup->PrimaryPickupItemEntry.ItemDefinition);
+			auto ItemInstances = PlayerController->WorldInventory->Inventory.ItemInstances;
+			auto ReplicatedEntries = PlayerController->WorldInventory->Inventory.ReplicatedEntries;
 
-		UFortItemDefinition* ItemDefinition = Pickup->PrimaryPickupItemEntry.ItemDefinition;
-		int Count = Pickup->PrimaryPickupItemEntry.Count;
+			if (!ItemDef)
+				return;
 
-		FFortItemList& Inventory = PlayerController->WorldInventory->Inventory;
+			bool Update = false;
 
-		TArray<UFortWorldItem*>& ItemInstances = Inventory.ItemInstances;
-		TArray<FFortItemEntry>& ReplicatedEntries = Inventory.ReplicatedEntries;
+			if (Inventory::IsPrimaryQuickbar(ItemDef) && Inventory::IsInventoryFull(PlayerController, 1) && Pawn->CurrentWeapon)
+			{
+				auto CurrentItemGuid = Pawn->CurrentWeapon->ItemEntryGuid;
 
-		UFortWorldItem* FortItem = (UFortWorldItem*)ItemDefinition->CreateTemporaryItemInstanceBP(Count, 1);
+				if (auto ItemInstance = Inventory::FindItemInstance(PlayerController, CurrentItemGuid))
+				{
+					auto ItemEntry = &ItemInstance->ItemEntry;
+					if (ItemEntry->ItemDefinition && ItemInstance->CanBeDropped())
+					{
+						if (ItemEntry)
+						{
+							Inventory::SpawnPickup(*ItemEntry, Pawn->K2_GetActorLocation());
+							Inventory::RemoveItem(PlayerController, CurrentItemGuid, ItemEntry->Count);
+							Update = true;
+						}
+					}
+				}
+			}
 
-		ItemInstances.Add(FortItem);
-		ReplicatedEntries.Add(FortItem->ItemEntry);
+			auto Item = Inventory::AddItem(PlayerController, ItemDef, Pickup->PrimaryPickupItemEntry.Count, &Update, Pickup->PrimaryPickupItemEntry.LoadedAmmo);
 
-		Inventory.MarkArrayDirty();
+			if (Update)
+				Inventory::Update(PlayerController);
 
-		Pickup->PickupLocationData.PickupTarget = Pawn;
-		Pickup->PickupLocationData.FlyTime = 0.40f;
-		Pickup->PickupLocationData.ItemOwner = Pawn;
-		Pickup->OnRep_PickupLocationData();
+			Pickup->PickupLocationData.PickupTarget = Pawn;
+			Pickup->PickupLocationData.FlyTime = 0.50;
+			Pickup->PickupLocationData.ItemOwner = Pawn;
+			Pickup->OnRep_PickupLocationData();
+			Pickup->OnRep_bPickedUp();
+		}
+	}
 
-		Pickup->bPickedUp = true;
-		Pickup->OnRep_bPickedUp();
+
+	static void ServerHandlePickupWithRequestedSwapHook(AFortPlayerPawnAthena* Pawn, AFortPickup* Pickup, FGuid Swap, float InFlyTime, FVector InStartDirection, bool bPlayPickupSound)
+	{
+		auto PlayerController = (AFortPlayerControllerAthena*)Pawn->Controller;
+
+		if (Pickup && !Pickup->bPickedUp && PlayerController->GetUseHoldToSwapPickupSetting())
+		{
+			Pickup->bPickedUp = true;
+
+			auto ItemDef = Cast<UFortWorldItemDefinition>(Pickup->PrimaryPickupItemEntry.ItemDefinition);
+			auto ItemInstances = PlayerController->WorldInventory->Inventory.ItemInstances;
+			auto ReplicatedEntries = PlayerController->WorldInventory->Inventory.ReplicatedEntries;
+
+			if (!ItemDef)
+				return;
+
+			bool Update = false;
+
+			if (Inventory::IsPrimaryQuickbar(ItemDef) && Pawn->CurrentWeapon)
+			{
+				auto CurrentItemGuid = Swap;
+
+				if (auto ItemInstance = Inventory::FindItemInstance(PlayerController, CurrentItemGuid))
+				{
+					auto ItemEntry = &ItemInstance->ItemEntry;
+					if (ItemEntry->ItemDefinition && ItemInstance->CanBeDropped())
+					{
+						if (ItemEntry)
+						{
+							Inventory::SpawnPickup(*ItemEntry, Pawn->K2_GetActorLocation());
+							Inventory::RemoveItem(PlayerController, CurrentItemGuid, ItemEntry->Count);
+							Update = true;
+						}
+					}
+				}
+			}
+
+			auto Item = Inventory::AddItem(PlayerController, ItemDef, Pickup->PrimaryPickupItemEntry.Count, &Update, Pickup->PrimaryPickupItemEntry.LoadedAmmo);
+
+			if (Update)
+				Inventory::Update(PlayerController);
+
+			Pickup->PickupLocationData.PickupTarget = Pawn;
+			Pickup->PickupLocationData.FlyTime = 0.50;
+			Pickup->PickupLocationData.ItemOwner = Pawn;
+			Pickup->OnRep_PickupLocationData();
+			Pickup->OnRep_bPickedUp();
+		}
 	}
 
 	static void ServerAttemptInventoryDropHook(AFortPlayerControllerAthena* PlayerController, FGuid ItemGuid, int Count)
 	{
-		if (!PlayerController->MyFortPawn || PlayerController->IsInAircraft())
+		auto Pawn = Cast<AFortPlayerPawnAthena>(PlayerController->Pawn);
+
+		if (!Pawn)
 			return;
 
+		if (auto ItemEntry = Inventory::FindItemEntry(PlayerController, ItemGuid))
+		{
+			for (int i = 0; i < Pawn->CurrentWeaponList.Num(); i++)
+			{
+				auto Weapon = Pawn->CurrentWeaponList[i];
+
+				if (Weapon && Weapon->ItemEntryGuid == ItemEntry->ItemGuid)
+				{
+					ItemEntry->LoadedAmmo = Weapon->AmmoCount;
+					break;
+				}
+			}
+
+			if (auto Pickup = Inventory::SpawnPickup(*ItemEntry, Pawn->K2_GetActorLocation()))
+			{
+				Pickup->PrimaryPickupItemEntry.Count = Count;
+				Pickup->OnRep_PrimaryPickupItemEntry();
+			}
+
+			Inventory::RemoveItem(PlayerController, ItemGuid, Count);
+			Inventory::Update(PlayerController);
+		}
 	}
 
 	static void ServerTryActivateAbilityHook(UAbilitySystemComponent* AbilitySystemComponent, FGameplayAbilitySpecHandle Handle, bool InputPressed, FPredictionKey PredictionKey)
@@ -341,39 +409,139 @@ namespace Game
 		GameMode->RestartPlayerAtTransform(PlayerController, Transform);
 	}
 
-	static void ServerCreateBuildingActorHook(AFortPlayerControllerAthena* PlayerController, FCreateBuildingActorData CreateBuildingData)
+	static void ServerCreateBuildingActorHook(AFortPlayerControllerAthena* PlayerController, FCreateBuildingActorData& CreateBuildingActorData)
 	{
-		UClass* BuildingClass = PlayerController->BroadcastRemoteClientInfo->RemoteBuildableClass;
-
-		/* static */ auto GameState = Cast<AFortGameStateAthena>(GetWorld()->GameState);
-		
-		bool bAllowedBuildingClass = false;
-
-		for (int i = 0; i < GameState->BuildingActorClasses.Num(); i++)
-		{
-			auto CurrentClass = GameState->BuildingActorClasses[i];
-
-			if (CurrentClass == BuildingClass)
-			{
-				bAllowedBuildingClass = true;
-				break;
-			}
-		}
-
-		if (!bAllowedBuildingClass)
+		if (!PlayerController->BroadcastRemoteClientInfo)
 			return;
 
-		FVector BuildingLocation = CreateBuildingData.BuildLoc;
-		FRotator BuildingRotation = CreateBuildingData.BuildRot;
-		bool bMirrored = CreateBuildingData.bMirrored;
+		if (!PlayerController->BroadcastRemoteClientInfo->RemoteBuildableClass)
+			return;
 
-		__int64 v32[2]{};
-		char a;
+		char v33[8];
+		__int64 v41[3];
 
-		if (!Native::CantBuild(GetWorld(), BuildingClass, BuildingLocation, BuildingRotation, bMirrored, v32, &a))
+		v41[0] = 0;
+		v41[1] = 0;
+
+		if (!(*(unsigned int(*)(AFortPlayerControllerAthena*, UClass*, void*, void*, DWORD, __int64*, char*))(PlayerController->VFT[6552 / 8]))(
+			PlayerController,
+			PlayerController->BroadcastRemoteClientInfo->RemoteBuildableClass,
+			&CreateBuildingActorData.BuildLoc,
+			&CreateBuildingActorData.BuildRot,
+			CreateBuildingActorData.bMirrored,
+			v41,
+			v33))
 		{
-			ABuildingSMActor* NewBuildingActor = GetWorld()->SpawnActor<ABuildingSMActor>(BuildingLocation, BuildingRotation, BuildingClass);
-			NewBuildingActor->InitializeKismetSpawnedBuildingActor(NewBuildingActor, PlayerController, true);
+			auto Building = GetWorld()->SpawnActor<ABuildingSMActor>(CreateBuildingActorData.BuildLoc, CreateBuildingActorData.BuildRot, PlayerController->BroadcastRemoteClientInfo->RemoteBuildableClass);
+			if (Building)
+			{
+				Building->SetMirrored(CreateBuildingActorData.bMirrored);
+
+				Building->InitializeKismetSpawnedBuildingActor(Building, PlayerController, true);
+				if (auto PlayerState = Cast<AFortPlayerStateAthena>(PlayerController->PlayerState))
+					Building->TeamIndex = PlayerState->TeamIndex;
+				Building->OnRep_Team();
+
+				Building->bPlayerPlaced = true;
+
+				bool bUpdate = false;
+
+				if (PlayerController->bBuildFree)
+					return;
+
+				if (auto ItemEntry = Inventory::FindItemEntry(PlayerController, UFortKismetLibrary::K2_GetResourceItemDefinition(Building->ResourceType)))
+				{
+					if (Inventory::RemoveItem(PlayerController, ItemEntry->ItemGuid, 10))
+						Inventory::Update(PlayerController);
+
+					return;
+				}
+			}
+		}
+	}
+
+	static void ServerEditBuildingActorHook(AFortPlayerControllerAthena* PlayerController, ABuildingSMActor* BuildingActorToEdit, UClass* NewBuildingClass, int RotationIterations, char bMirrored)
+	{
+		if (!BuildingActorToEdit || !NewBuildingClass)
+			return;
+
+		if (auto BuildingActor = Native::BuildingSMActorReplaceBuildingActor(BuildingActorToEdit, 1, NewBuildingClass, 0, RotationIterations, bMirrored, PlayerController))
+		{
+			BuildingActor->bPlayerPlaced = true;
+			if (auto PlayerState = Cast<AFortPlayerStateAthena>(PlayerController->PlayerState))
+				BuildingActor->SetTeam(PlayerState->TeamIndex);
+			BuildingActor->OnRep_Team();
+		}
+	}
+
+	static void ServerEndEditingBuildingActorHook(AFortPlayerControllerAthena* PlayerController, ABuildingSMActor* BuildingActorToStopEditing)
+	{
+		if (!PlayerController->IsInAircraft() && BuildingActorToStopEditing && PlayerController->Pawn)
+		{
+			auto EditTool = Cast<AFortWeap_EditingTool>((((AFortPlayerPawnAthena*)PlayerController->Pawn)->CurrentWeapon));
+
+			BuildingActorToStopEditing->EditingPlayer = nullptr;
+			BuildingActorToStopEditing->OnRep_EditingPlayer();
+
+			if (EditTool)
+			{
+				EditTool->bEditConfirmed = true;
+				EditTool->EditActor = nullptr;
+				EditTool->OnRep_EditActor();
+			}
+		}
+	}
+
+	static void ServerBeginEditingBuildingActorHook(AFortPlayerControllerAthena* PlayerController, ABuildingSMActor* BuildingActorToEdit)
+	{
+		auto Pawn = Cast<AFortPlayerPawnAthena>(PlayerController->Pawn);
+
+		if (!Pawn)
+			return;
+
+		if (Pawn->CurrentWeapon)
+		{
+			if (Pawn->CurrentWeapon->IsA(AFortWeap_BuildingToolBase::StaticClass()))
+				return;
+		}
+
+		if (PlayerController && BuildingActorToEdit)
+		{
+			static auto EditToolDef = UObject::FindObject<UFortWeaponItemDefinition>("/Game/Items/Weapons/BuildingTools/EditTool.EditTool");
+
+			if (auto EditTool = Cast<AFortWeap_EditingTool>(Pawn->EquipWeaponDefinition(EditToolDef, FGuid{})))
+			{
+				EditTool->EditActor = BuildingActorToEdit;
+				EditTool->OnRep_EditActor();
+				BuildingActorToEdit->EditingPlayer = Cast<AFortPlayerStateZone>(Pawn->PlayerState);
+				BuildingActorToEdit->OnRep_EditingPlayer();
+			}
+		}
+	}
+
+	static void ServerAttemptInteractHook(UFortControllerComponent_Interaction* InteractionComp, AActor* ReceivingActor, __int64* a3, __int64 a4, unsigned int a5, __int64 a6)
+	{
+		Native::ServerAttemptInteract(InteractionComp, ReceivingActor, a3, a4, a5, a6);
+
+		if (InteractionComp && ReceivingActor)
+		{		
+			if (ReceivingActor->IsA(ABuildingContainer::StaticClass()))
+			{
+				auto BuildingContainer = (ABuildingContainer*)ReceivingActor;
+				if (!BuildingContainer->bAlreadySearched)
+				{
+					
+					std::vector<FFortItemEntry> LootDrops;
+					if (Util::PickLootDrops(BuildingContainer->SearchLootTierGroup, -1, 1, LootDrops))
+					{
+						BuildingContainer->OnRep_bAlreadySearched();
+						BuildingContainer->OnLoot();
+
+						for (auto LootDrop : LootDrops)
+							Inventory::SpawnPickup(LootDrop, BuildingContainer->K2_GetActorLocation());
+					}
+				}
+			}
 		}
 	}
 
@@ -389,13 +557,16 @@ namespace Game
 		Util::BindHook(DefaultFortPCAthena, 510, ServerExecuteInventoryItemHook, nullptr);
 		Util::BindHook(DefaultFortPCAthena, 529, ServerAttemptInventoryDropHook, nullptr);
 		Util::BindHook(DefaultFortPCAthena, 548, ServerCreateBuildingActorHook, nullptr);
-		// Util::BindHook(DefaultFortPCAthena, 604, ServerReadyToStartMatchHook, nullptr);
 		Util::BindHook(DefaultFortPCAthena, 606, ServerLoadingScreenDroppedHook, (PVOID*)&Native::ServerLoadingScreenDropped);
+		Util::BindHook(DefaultFortPCAthena, 550, ServerEditBuildingActorHook, nullptr);
+		Util::BindHook(DefaultFortPCAthena, 553, ServerEndEditingBuildingActorHook, nullptr);
+		Util::BindHook(DefaultFortPCAthena, 555, ServerBeginEditingBuildingActorHook, nullptr);
 		Util::BindHook(DefaultFortPawnAthena, 455, ServerHandlePickupHook, nullptr);
 		Util::BindHook(DefaultFortAbilitySystemComp, 141, ServerTryActivateAbilityHook, nullptr);
 		Util::BindHook(DefaultFortAbilitySystemComp, 139, ServerTryActivateAbilityWithEventDataHook, nullptr);
 
 		CREATE_HOOK(ClientOnPawnDiedHook, Native::ClientOnPawnDied);
 		CREATE_HOOK(RestartPlayerAtPlayerStartHook, Native::RestartPlayerAtPlayerStart);
+		CREATE_HOOK(ServerAttemptInteractHook, Native::ServerAttemptInteract);
 	}
 }
