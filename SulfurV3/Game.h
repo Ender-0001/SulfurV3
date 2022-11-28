@@ -529,8 +529,7 @@ namespace Game
 			{
 				auto BuildingContainer = (ABuildingContainer*)ReceivingActor;
 				if (!BuildingContainer->bAlreadySearched)
-				{
-					
+				{	
 					std::vector<FFortItemEntry> LootDrops;
 					if (Util::PickLootDrops(BuildingContainer->SearchLootTierGroup, -1, 1, LootDrops))
 					{
