@@ -66,5 +66,5 @@ namespace Native
 		decltype(IsDedicatedServer)((uintptr_t)GetModuleHandle(0) + 0x3132CE0);
 
 	static void (*ServerAttemptInteract)(UFortControllerComponent_Interaction* InteractionComp, AActor* ReceivingActor, __int64* a3, __int64 a4, unsigned int a5, __int64 a6) =
-		decltype(ServerAttemptInteract)((uintptr_t)GetModuleHandle(0) + );
+		decltype(ServerAttemptInteract)((uintptr_t)GetModuleHandle(0) + 0x1495B20);
  }

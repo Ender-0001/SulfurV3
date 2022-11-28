@@ -418,12 +418,12 @@ namespace Game
 			return;
 
 		char v33[8];
-		__int64 v41[3];
+		__int64 v41[3]{};
 
 		v41[0] = 0;
 		v41[1] = 0;
 
-		if (!(*(unsigned int(*)(AFortPlayerControllerAthena*, UClass*, void*, void*, DWORD, __int64*, char*))(PlayerController->VFT[6552 / 8]))(
+		if (!(*(unsigned int(*)(AFortPlayerControllerAthena*, UClass*, void*, void*, DWORD, __int64*, char*))(PlayerController->VFT[0x333]))(
 			PlayerController,
 			PlayerController->BroadcastRemoteClientInfo->RemoteBuildableClass,
 			&CreateBuildingActorData.BuildLoc,
@@ -436,10 +436,11 @@ namespace Game
 			if (Building)
 			{
 				Building->SetMirrored(CreateBuildingActorData.bMirrored);
-
 				Building->InitializeKismetSpawnedBuildingActor(Building, PlayerController, true);
+
 				if (auto PlayerState = Cast<AFortPlayerStateAthena>(PlayerController->PlayerState))
 					Building->TeamIndex = PlayerState->TeamIndex;
+
 				Building->OnRep_Team();
 
 				Building->bPlayerPlaced = true;
@@ -456,6 +457,33 @@ namespace Game
 
 					return;
 				}
+			}
+		}
+	}
+
+	static void ServerBeginEditingBuildingActorHook(AFortPlayerControllerAthena* PlayerController, ABuildingSMActor* BuildingActorToEdit)
+	{
+		auto Pawn = Cast<AFortPlayerPawnAthena>(PlayerController->Pawn);
+
+		if (!Pawn)
+			return;
+
+		if (Pawn->CurrentWeapon)
+		{
+			if (Pawn->CurrentWeapon->IsA(AFortWeap_BuildingToolBase::StaticClass()))
+				return;
+		}
+
+		if (PlayerController && BuildingActorToEdit)
+		{
+			static auto EditToolDef = UObject::FindObject<UFortWeaponItemDefinition>("/Game/Items/Weapons/BuildingTools/EditTool.EditTool");
+
+			if (auto EditTool = Cast<AFortWeap_EditingTool>(Pawn->EquipWeaponDefinition(EditToolDef, FGuid{})))
+			{
+				EditTool->EditActor = BuildingActorToEdit;
+				EditTool->OnRep_EditActor();
+				BuildingActorToEdit->EditingPlayer = Cast<AFortPlayerStateZone>(Pawn->PlayerState);
+				BuildingActorToEdit->OnRep_EditingPlayer();
 			}
 		}
 	}
@@ -492,33 +520,6 @@ namespace Game
 		}
 	}
 
-	static void ServerBeginEditingBuildingActorHook(AFortPlayerControllerAthena* PlayerController, ABuildingSMActor* BuildingActorToEdit)
-	{
-		auto Pawn = Cast<AFortPlayerPawnAthena>(PlayerController->Pawn);
-
-		if (!Pawn)
-			return;
-
-		if (Pawn->CurrentWeapon)
-		{
-			if (Pawn->CurrentWeapon->IsA(AFortWeap_BuildingToolBase::StaticClass()))
-				return;
-		}
-
-		if (PlayerController && BuildingActorToEdit)
-		{
-			static auto EditToolDef = UObject::FindObject<UFortWeaponItemDefinition>("/Game/Items/Weapons/BuildingTools/EditTool.EditTool");
-
-			if (auto EditTool = Cast<AFortWeap_EditingTool>(Pawn->EquipWeaponDefinition(EditToolDef, FGuid{})))
-			{
-				EditTool->EditActor = BuildingActorToEdit;
-				EditTool->OnRep_EditActor();
-				BuildingActorToEdit->EditingPlayer = Cast<AFortPlayerStateZone>(Pawn->PlayerState);
-				BuildingActorToEdit->OnRep_EditingPlayer();
-			}
-		}
-	}
-
 	static void ServerAttemptInteractHook(UFortControllerComponent_Interaction* InteractionComp, AActor* ReceivingActor, __int64* a3, __int64 a4, unsigned int a5, __int64 a6)
 	{
 		Native::ServerAttemptInteract(InteractionComp, ReceivingActor, a3, a4, a5, a6);
@@ -533,10 +534,11 @@ namespace Game
 					std::vector<FFortItemEntry> LootDrops;
 					if (Util::PickLootDrops(BuildingContainer->SearchLootTierGroup, -1, 1, LootDrops))
 					{
+						BuildingContainer->bAlreadySearched = true;
 						BuildingContainer->OnRep_bAlreadySearched();
 						BuildingContainer->OnLoot();
 
-						for (auto LootDrop : LootDrops)
+						for (auto& LootDrop : LootDrops)
 							Inventory::SpawnPickup(LootDrop, BuildingContainer->K2_GetActorLocation());
 					}
 				}

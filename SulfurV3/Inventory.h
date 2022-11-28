@@ -271,7 +271,6 @@ namespace Inventory
 			}
 
 			Pickup->SetReplicateMovement(true);
-			Pickup->OnRep_ReplicateMovement();
 			Pickup->MovementComponent = (UProjectileMovementComponent*)UGameplayStatics::SpawnObject(UProjectileMovementComponent::StaticClass(), Pickup);
 
 			return Pickup;
