@@ -67,4 +67,7 @@ namespace Native
 
 	static void (*ServerAttemptInteract)(UFortControllerComponent_Interaction* InteractionComp, AActor* ReceivingActor, __int64* a3, __int64 a4, unsigned int a5, __int64 a6) =
 		decltype(ServerAttemptInteract)((uintptr_t)GetModuleHandle(0) + 0x1495B20);
+
+	static void (*OnDamageServer)(ABuildingActor* BuildingActor, float Damage, FGameplayTagContainer DamageTags, FVector Momentum, FHitResult HitInfo, AController* InstigatedBy, AActor* DamageCauser, FGameplayEffectContextHandle EffectContext) =
+		decltype(OnDamageServer)((uintptr_t)GetModuleHandle(0) + 0x1CC36A0);
  }

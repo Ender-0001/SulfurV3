@@ -249,6 +249,11 @@ struct FName
 		return Str;
 	}
 
+	bool IsValid()
+	{
+		return ComparisonIndex != 0;
+	}
+
 	bool operator ==(FName other)
 	{
 		return ComparisonIndex == other.ComparisonIndex;

@@ -200,6 +200,7 @@ namespace Game
 				}
 
 				Inventory::SpawnPickup(Item->ItemEntry, DeathInfo.DeathLocation, EFortPickupSourceTypeFlag::Player, EFortPickupSpawnSource::PlayerElimination);
+				Inventory::RemoveItem(PlayerController, Item->ItemEntry.ItemGuid, Item->ItemEntry.Count);
 			}
 
 			PlayerController->bMarkedAlive = false;
@@ -526,9 +527,8 @@ namespace Game
 
 		if (InteractionComp && ReceivingActor)
 		{		
-			if (ReceivingActor->IsA(ABuildingContainer::StaticClass()))
+			if (auto BuildingContainer = Cast<ABuildingContainer>(ReceivingActor))
 			{
-				auto BuildingContainer = (ABuildingContainer*)ReceivingActor;
 				if (!BuildingContainer->bAlreadySearched)
 				{	
 					std::vector<FFortItemEntry> LootDrops;
@@ -545,6 +545,70 @@ namespace Game
 			}
 		}
 	}
+
+	static void OnDamageServerHook(ABuildingActor* BuildingActor, float Damage, struct FGameplayTagContainer DamageTags, struct FVector Momentum, struct FHitResult HitInfo, class AController* InstigatedBy, class AActor* DamageCauser, struct FGameplayEffectContextHandle EffectContext)
+	{
+		auto BuildingSMActor = Cast<ABuildingSMActor>(BuildingActor);
+		auto PlayerController = Cast<AFortPlayerControllerAthena>(InstigatedBy);
+		auto Pawn = Cast<AFortPlayerPawnAthena>(PlayerController ? PlayerController->Pawn : nullptr);
+		auto Weapon = Cast<AFortWeapon>(DamageCauser);
+
+		if (!BuildingSMActor)
+			return;
+
+		if (!PlayerController)
+			return;
+
+		if (!Pawn)
+			return;
+
+		if (!Weapon)
+			return;
+
+		if (BuildingSMActor->bPlayerPlaced)
+			return;
+
+		if (Weapon->WeaponData && Cast<UFortWeaponMeleeItemDefinition>(Weapon->WeaponData))
+		{
+			if (PlayerController)
+			{		
+				auto ResourceCount = 0;
+				UFortResourceItemDefinition* ItemDef = UFortKismetLibrary::K2_GetResourceItemDefinition(BuildingSMActor->ResourceType);
+
+				auto BuildingResourceAmountOverride = BuildingSMActor->BuildingResourceAmountOverride;
+
+				if (BuildingResourceAmountOverride.RowName.IsValid())
+				{
+					printf("Evaluating\n");
+
+					//static auto CurveTable = UObject::FindObject<UCurveTable>("/Game/Athena/Balance/DataTables/AthenaResourceRates.AthenaResourceRates");
+					TEnumAsByte<EEvaluateCurveTableResult> Result;
+					float Out;
+
+					printf("X: %f\n", HitInfo.Time);
+					UDataTableFunctionLibrary::EvaluateCurveTableRow(BuildingResourceAmountOverride.CurveTable, BuildingResourceAmountOverride.RowName, HitInfo.Time, L"", &Result, &Out);
+					ResourceCount = Out;
+					printf("Out: %f\n", Out);
+				}
+
+				if (!ItemDef || ResourceCount == 0 || !BuildingResourceAmountOverride.RowName.IsValid())
+				{
+					Native::OnDamageServer(BuildingActor, Damage, DamageTags, Momentum, HitInfo, InstigatedBy, DamageCauser, EffectContext);
+					return;
+				}
+
+				bool Update;
+				Inventory::AddItem(PlayerController, ItemDef, ResourceCount, &Update);
+				if (Update)
+					Inventory::Update(PlayerController);
+
+				PlayerController->ClientReportDamagedResourceBuilding(BuildingSMActor, BuildingSMActor->ResourceType, ResourceCount, false, Damage == 100.0f);
+			}
+		}
+
+		Native::OnDamageServer(BuildingActor, Damage, DamageTags, Momentum, HitInfo, InstigatedBy, DamageCauser, EffectContext);
+	}
+
 
 	static void Init()
 	{
@@ -569,5 +633,6 @@ namespace Game
 		CREATE_HOOK(ClientOnPawnDiedHook, Native::ClientOnPawnDied);
 		CREATE_HOOK(RestartPlayerAtPlayerStartHook, Native::RestartPlayerAtPlayerStart);
 		CREATE_HOOK(ServerAttemptInteractHook, Native::ServerAttemptInteract);
+		CREATE_HOOK(OnDamageServerHook, Native::OnDamageServer);
 	}
 }
