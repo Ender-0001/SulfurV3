@@ -70,45 +70,39 @@ namespace Game
 		Inventory::AddItem(PlayerController, UObject::FindObject<UFortItemDefinition>("/Game/Athena/Items/Weapons/WID_Assault_AutoHigh_Athena_SR_Ore_T03.WID_Assault_AutoHigh_Athena_SR_Ore_T03"), 1);
 		Inventory::AddItem(PlayerController, UObject::FindObject<UFortItemDefinition>("/Game/Athena/Items/Weapons/WID_Pistol_AutoHeavyPDW_Athena_R_Ore_T03.WID_Pistol_AutoHeavyPDW_Athena_R_Ore_T03"), 1);
 		Inventory::AddItem(PlayerController, UObject::FindObject<UFortItemDefinition>("/Game/Athena/Items/Consumables/ShieldSmall/Athena_ShieldSmall.Athena_ShieldSmall"), 6);
-		Inventory::AddItem(PlayerController, UObject::FindObject<UFortItemDefinition>("/Game/Items/ResourcePickups/WoodItemData.WoodItemData"), 999);
 		Inventory::AddItem(PlayerController, UObject::FindObject<UFortItemDefinition>("/Game/Athena/Items/Ammo/AthenaAmmoDataShells.AthenaAmmoDataShells"), 999);
 		Inventory::AddItem(PlayerController, UObject::FindObject<UFortItemDefinition>("/Game/Athena/Items/Ammo/AthenaAmmoDataBulletsMedium.AthenaAmmoDataBulletsMedium"), 999);
 		Inventory::AddItem(PlayerController, UObject::FindObject<UFortItemDefinition>("/Game/Athena/Items/Ammo/AthenaAmmoDataBulletsLight.AthenaAmmoDataBulletsLight"), 999);
 		Inventory::AddItem(PlayerController, UObject::FindObject<UFortItemDefinition>("/Game/Athena/Items/Ammo/AthenaAmmoDataBulletsHeavy.AthenaAmmoDataBulletsHeavy"), 999);
 		Inventory::Update(PlayerController);
-	}
 
-	static void ServerLoadingScreenDroppedHook(AFortPlayerControllerAthena* PlayerController) // TODO: Move this
-	{
-		if (auto Pawn = Cast<AFortPlayerPawnAthena>(PlayerController->Pawn))
+		static auto HeadPart = UObject::FindObject<UCustomCharacterPart>("/Game/Characters/CharacterParts/Female/Medium/Heads/F_Med_Head1.F_Med_Head1");
+		static auto BodyPart = UObject::FindObject<UCustomCharacterPart>("/Game/Characters/CharacterParts/Female/Medium/Bodies/F_Med_Soldier_01.F_Med_Soldier_01");
+		static auto BackpackPart = UObject::FindObject<UCustomCharacterPart>("/Game/Characters/CharacterParts/Backpacks/NoBackpack.NoBackpack");
+
+		PlayerState->CharacterData.Parts[0] = HeadPart;
+		PlayerState->CharacterData.Parts[1] = BodyPart;
+		PlayerState->CharacterData.Parts[3] = BackpackPart;
+		PlayerState->OnRep_CharacterData();
+
+		static auto GameplayAbilitySet = UObject::FindObject<UFortAbilitySet>("/Game/Abilities/Player/Generic/Traits/DefaultPlayer/GAS_AthenaPlayer.GAS_AthenaPlayer");
+
+		for (int i = 0; i < GameplayAbilitySet->GameplayAbilities.Num(); i++)
 		{
-			static auto HeadPart = UObject::FindObject<UCustomCharacterPart>("/Game/Characters/CharacterParts/Female/Medium/Heads/F_Med_Head1.F_Med_Head1");
-			static auto BodyPart = UObject::FindObject<UCustomCharacterPart>("/Game/Characters/CharacterParts/Female/Medium/Bodies/F_Med_Soldier_01.F_Med_Soldier_01");
+			UClass* AbilityClass = GameplayAbilitySet->GameplayAbilities[i];
+			UGameplayAbility* AbilityDefaultObject = (UGameplayAbility*)AbilityClass->CreateDefaultObject();
 
-			Pawn->ServerChoosePart(EFortCustomPartType::Head, HeadPart);
-			Pawn->ServerChoosePart(EFortCustomPartType::Body, BodyPart);
+			FGameplayAbilitySpecHandle Handle{};
+			Handle.GenerateNewHandle();
 
-			static auto GameplayAbilitySet = UObject::FindObject<UFortAbilitySet>("/Game/Abilities/Player/Generic/Traits/DefaultPlayer/GAS_AthenaPlayer.GAS_AthenaPlayer");
+			FGameplayAbilitySpec Spec{ -1, -1, -1 };
+			Spec.Ability = AbilityDefaultObject;
+			Spec.Level = -1;
+			Spec.InputID = -1;
+			Spec.Handle = Handle;
 
-			for (int i = 0; i < GameplayAbilitySet->GameplayAbilities.Num(); i++)
-			{
-				UClass* AbilityClass = GameplayAbilitySet->GameplayAbilities[i];
-				UGameplayAbility* AbilityDefaultObject = (UGameplayAbility*)AbilityClass->CreateDefaultObject();
-
-				FGameplayAbilitySpecHandle Handle{};
-				Handle.GenerateNewHandle();
-
-				FGameplayAbilitySpec Spec{ -1, -1, -1 };
-				Spec.Ability = AbilityDefaultObject;
-				Spec.Level = -1;
-				Spec.InputID = -1;
-				Spec.Handle = Handle;
-
-				Native::GiveAbility(Pawn->AbilitySystemComponent, &Handle, Spec);
-			}
+			Native::GiveAbility(PlayerState->AbilitySystemComponent, &Handle, Spec);
 		}
-
-		return Native::ServerLoadingScreenDropped(PlayerController);
 	}
 
 	static void ServerAcknowledgePossessionHook(APlayerController* PlayerController, APawn* P)
@@ -622,7 +616,6 @@ namespace Game
 		Util::BindHook(DefaultFortPCAthena, 510, ServerExecuteInventoryItemHook, nullptr);
 		Util::BindHook(DefaultFortPCAthena, 529, ServerAttemptInventoryDropHook, nullptr);
 		Util::BindHook(DefaultFortPCAthena, 548, ServerCreateBuildingActorHook, nullptr);
-		Util::BindHook(DefaultFortPCAthena, 606, ServerLoadingScreenDroppedHook, (PVOID*)&Native::ServerLoadingScreenDropped);
 		Util::BindHook(DefaultFortPCAthena, 550, ServerEditBuildingActorHook, nullptr);
 		Util::BindHook(DefaultFortPCAthena, 553, ServerEndEditingBuildingActorHook, nullptr);
 		Util::BindHook(DefaultFortPCAthena, 555, ServerBeginEditingBuildingActorHook, nullptr);
