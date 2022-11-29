@@ -530,6 +530,7 @@ namespace Game
 			{
 				EditTool->EditActor = BuildingActorToEdit;
 				EditTool->OnRep_EditActor();
+
 				BuildingActorToEdit->EditingPlayer = Cast<AFortPlayerStateZone>(Pawn->PlayerState);
 				BuildingActorToEdit->OnRep_EditingPlayer();
 			}
@@ -544,8 +545,10 @@ namespace Game
 		if (auto BuildingActor = Native::BuildingSMActorReplaceBuildingActor(BuildingActorToEdit, 1, NewBuildingClass, 0, RotationIterations, bMirrored, PlayerController))
 		{
 			BuildingActor->bPlayerPlaced = true;
+
 			if (auto PlayerState = Cast<AFortPlayerStateAthena>(PlayerController->PlayerState))
 				BuildingActor->SetTeam(PlayerState->TeamIndex);
+
 			BuildingActor->OnRep_Team();
 		}
 	}
@@ -651,6 +654,7 @@ namespace Game
 					float Out;
 
 					printf("X: %f\n", HitInfo.Time);
+					std::cout << std::format("Momentum: {} {} {}\n", Momentum.X, Momentum.Y, Momentum.Z);
 					UDataTableFunctionLibrary::EvaluateCurveTableRow(BuildingResourceAmountOverride.CurveTable, BuildingResourceAmountOverride.RowName, HitInfo.Time, L"", &Result, &Out);
 					ResourceCount = Out;
 					printf("Out: %f\n", Out);
@@ -662,13 +666,18 @@ namespace Game
 					return;
 				}
 
+				bool bIsWeakspot = Damage == 100.0f;
+
+				if (bIsWeakspot)
+					ResourceCount *= 2; // for now..
+
 				bool Update;
 				Inventory::AddItem(PlayerController, ItemDef, ResourceCount, &Update);
 
 				if (Update)
 					Inventory::Update(PlayerController);
 
-				PlayerController->ClientReportDamagedResourceBuilding(BuildingSMActor, BuildingSMActor->ResourceType, ResourceCount, false, Damage == 100.0f);
+				PlayerController->ClientReportDamagedResourceBuilding(BuildingSMActor, BuildingSMActor->ResourceType, ResourceCount, false, bIsWeakspot);
 			}
 		}
 
