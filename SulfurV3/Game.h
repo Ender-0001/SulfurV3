@@ -16,6 +16,8 @@ namespace Game
 
 		GameState->CurrentPlaylistInfo.PlaylistReplicationKey++;
 		GameState->CurrentPlaylistInfo.MarkArrayDirty();
+
+		GameMode->GameSession = GetWorld()->SpawnActor<AFortGameSessionDedicatedAthena>({}, {});
 	}
 
 	static void Start()
@@ -673,6 +675,10 @@ namespace Game
 		Native::OnDamageServer(BuildingActor, Damage, DamageTags, Momentum, HitInfo, InstigatedBy, DamageCauser, EffectContext);
 	}
 
+	static char GetTeamIndexHook(UObject* a1, UObject* a2)
+	{
+		return 4;
+	}
 
 	static void Init()
 	{
@@ -697,5 +703,6 @@ namespace Game
 		CREATE_HOOK(RestartPlayerAtPlayerStartHook, Native::RestartPlayerAtPlayerStart);
 		CREATE_HOOK(ServerAttemptInteractHook, Native::ServerAttemptInteract);
 		CREATE_HOOK(OnDamageServerHook, Native::OnDamageServer);
+		CREATE_HOOK(GetTeamIndexHook, Native::GetTeamIndex);
 	}
 }

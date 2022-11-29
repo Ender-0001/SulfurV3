@@ -263,7 +263,7 @@ namespace Inventory
 		{
 			Pickup->PrimaryPickupItemEntry.Count = Count;
 			Pickup->PrimaryPickupItemEntry.ItemDefinition = ItemDef;
-
+			
 			Pickup->OnRep_PrimaryPickupItemEntry();
 
 			Pickup->TossPickup(Location, nullptr, 0, true, PickupSource, SpawnSource);

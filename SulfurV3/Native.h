@@ -68,4 +68,7 @@ namespace Native
 
 	static void (*OnDamageServer)(ABuildingActor* BuildingActor, float Damage, FGameplayTagContainer DamageTags, FVector Momentum, FHitResult HitInfo, AController* InstigatedBy, AActor* DamageCauser, FGameplayEffectContextHandle EffectContext) =
 		decltype(OnDamageServer)((uintptr_t)GetModuleHandle(0) + 0x1CC36A0);
+
+	static char (*GetTeamIndex)(UObject*, UObject*) =
+		decltype(GetTeamIndex)((uintptr_t)GetModuleHandle(0) + 0x17DDD40);
  }
