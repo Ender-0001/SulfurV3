@@ -3,7 +3,7 @@
 
 namespace Game
 {
-	static void Start()
+	static void PreLoad()
 	{
 		auto GameMode = Cast<AFortGameModeAthena>(GetWorld()->AuthorityGameMode);
 		auto GameState = Cast<AFortGameStateAthena>(GetWorld()->GameState);
@@ -13,9 +13,14 @@ namespace Game
 		GameState->CurrentPlaylistInfo.BasePlaylist = Playlist;
 		GameState->CurrentPlaylistInfo.OverridePlaylist = Playlist;
 
-		GameState->OnRep_CurrentPlaylistInfo();
 		GameState->CurrentPlaylistInfo.PlaylistReplicationKey++;
 		GameState->CurrentPlaylistInfo.MarkArrayDirty();
+	}
+
+	static void Start()
+	{
+		auto GameMode = Cast<AFortGameModeAthena>(GetWorld()->AuthorityGameMode);
+		auto GameState = Cast<AFortGameStateAthena>(GetWorld()->GameState);
 
 		GameMode->GameSession->MaxPlayers = 100;
 		GameMode->bWorldIsReady = true;

@@ -42,8 +42,6 @@ namespace Native
 	static __int64 (*CantBuild)(UWorld*, UClass*, FVector, FRotator, char, void*, char*) =
 		decltype(CantBuild)((uintptr_t)GetModuleHandle(0) + 0x1601820);
 
-	static void (*ServerLoadingScreenDropped)(AFortPlayerControllerAthena*);
-
 	static void (*Array_Remove)(void* Array, UProperty*, int) =
 		decltype(Array_Remove)((uintptr_t)GetModuleHandle(0) + 0x312C110);
 

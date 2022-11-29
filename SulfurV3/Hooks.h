@@ -5,10 +5,30 @@ namespace Hooks
 {
 	static bool ReadyToStartMatchHook(__int64 a1)
 	{
+		auto GameMode = Cast<AFortGameModeAthena>(GetWorld()->AuthorityGameMode);
+		auto GameState = Cast<AFortGameStateAthena>(GetWorld()->GameState);
+
+		static bool bPreLoaded = false; 
+
+		if (!bPreLoaded)
+		{
+			bPreLoaded = true;
+
+			Game::PreLoad();
+		}
+
 		TArray<AActor*> Actors;
 		UGameplayStatics::GetAllActorsOfClass(GetWorld(), AFortPlayerStartWarmup::StaticClass(), &Actors);
 
-		if (Actors.IsEmpty())
+		static bool bLoadedPlaylist = false;
+
+		if (!bLoadedPlaylist)
+		{
+			bLoadedPlaylist = true;
+			GameState->OnRep_CurrentPlaylistInfo();
+		}
+
+		if (!GameState->MapInfo)
 			return false;
 
 		Game::Start();
