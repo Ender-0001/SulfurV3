@@ -107,6 +107,7 @@ namespace Inventory
 		if (ItemInstance && ItemEntry)
 		{
 			auto NewCount = ItemInstance->ItemEntry.Count - Count;
+
 			if (NewCount <= 0)
 			{
 				auto ReplicatedEntriesProp = UObject::FindObject<UArrayProperty>("/Script/FortniteGame.FortItemList.ReplicatedEntries");

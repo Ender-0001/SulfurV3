@@ -261,8 +261,6 @@ namespace Game
 
 		if (Pickup && !Pickup->bPickedUp)
 		{
-			Pickup->bPickedUp = true;
-
 			auto ItemDef = Cast<UFortWorldItemDefinition>(Pickup->PrimaryPickupItemEntry.ItemDefinition);
 			auto ItemInstances = PlayerController->WorldInventory->Inventory.ItemInstances;
 			auto ReplicatedEntries = PlayerController->WorldInventory->Inventory.ReplicatedEntries;
@@ -279,6 +277,7 @@ namespace Game
 				if (auto ItemInstance = Inventory::FindItemInstance(PlayerController, CurrentItemGuid))
 				{
 					auto ItemEntry = &ItemInstance->ItemEntry;
+
 					if (ItemEntry->ItemDefinition && ItemInstance->CanBeDropped())
 					{
 						if (ItemEntry)
@@ -300,6 +299,8 @@ namespace Game
 			Pickup->PickupLocationData.FlyTime = 0.50;
 			Pickup->PickupLocationData.ItemOwner = Pawn;
 			Pickup->OnRep_PickupLocationData();
+
+			Pickup->bPickedUp = true;
 			Pickup->OnRep_bPickedUp();
 		}
 	}
@@ -311,8 +312,6 @@ namespace Game
 
 		if (Pickup && !Pickup->bPickedUp && PlayerController->GetUseHoldToSwapPickupSetting())
 		{
-			Pickup->bPickedUp = true;
-
 			auto ItemDef = Cast<UFortWorldItemDefinition>(Pickup->PrimaryPickupItemEntry.ItemDefinition);
 			auto ItemInstances = PlayerController->WorldInventory->Inventory.ItemInstances;
 			auto ReplicatedEntries = PlayerController->WorldInventory->Inventory.ReplicatedEntries;
@@ -350,6 +349,8 @@ namespace Game
 			Pickup->PickupLocationData.FlyTime = 0.50;
 			Pickup->PickupLocationData.ItemOwner = Pawn;
 			Pickup->OnRep_PickupLocationData();
+
+			Pickup->bPickedUp = true;
 			Pickup->OnRep_bPickedUp();
 		}
 	}
@@ -526,14 +527,26 @@ namespace Game
 				if (!BuildingContainer->bAlreadySearched)
 				{	
 					std::vector<FFortItemEntry> LootDrops;
-					if (Util::PickLootDrops(BuildingContainer->SearchLootTierGroup, -1, 1, LootDrops))
+					auto SearchLootTierGroup = BuildingContainer->SearchLootTierGroup;
+
+					auto CorrectLocation = BuildingContainer->K2_GetActorLocation() + BuildingContainer->GetActorRightVector() * 70.0f + FVector{ 0, 0, 50 };
+
+					if (SearchLootTierGroup.ToString() == "Loot_Treasure") // Very bad, we should probably do a loop of all chests and ammo boxes and fix their SearchLootTierGroup.
+						SearchLootTierGroup = UKismetStringLibrary::Conv_StringToName(L"Loot_AthenaTreasure");
+
+					if (SearchLootTierGroup.ToString() == "Loot_Ammo")
+						SearchLootTierGroup = UKismetStringLibrary::Conv_StringToName(L"Loot_AthenaAmmoLarge");
+
+					if (Util::PickLootDrops(SearchLootTierGroup, -1, 1, LootDrops))
 					{
 						BuildingContainer->bAlreadySearched = true;
 						BuildingContainer->OnRep_bAlreadySearched();
 						BuildingContainer->OnLoot();
 
 						for (auto& LootDrop : LootDrops)
-							Inventory::SpawnPickup(LootDrop, BuildingContainer->K2_GetActorLocation());
+						{
+							Inventory::SpawnPickup(LootDrop, CorrectLocation);
+						}
 					}
 				}
 			}
@@ -593,6 +606,7 @@ namespace Game
 
 				bool Update;
 				Inventory::AddItem(PlayerController, ItemDef, ResourceCount, &Update);
+
 				if (Update)
 					Inventory::Update(PlayerController);
 

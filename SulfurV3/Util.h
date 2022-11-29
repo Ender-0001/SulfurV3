@@ -1,6 +1,7 @@
 #pragma once
 #include "framework.h"
 #include <numbers>
+#include <unordered_map>
 
 #define HALF_PI 1.5707964
 #define PI 3.14159265359
@@ -186,8 +187,172 @@ namespace Util
         return Name;
     }
 
-    static bool PickLootDrops(FName TierGroupName, int WorldLevel, int ForcedLootTier, std::vector<FFortItemEntry>& LootDrops)
+    static FFortLootTierData* GetLootTierData(std::vector<FFortLootTierData*>& LootTierData)
     {
-        return false;
+        float TotalWeight = 0;
+
+        for (auto Item : LootTierData)
+            TotalWeight += Item->Weight;
+
+        float RandomNumber = UKismetMathLibrary::RandomFloatInRange(0, TotalWeight); // is -1 needed?
+
+        FFortLootTierData* SelectedItem = nullptr;
+
+        for (auto Item : LootTierData)
+        {
+            if (RandomNumber <= Item->Weight)
+            {
+                SelectedItem = Item;
+                break;
+            }
+
+            RandomNumber = RandomNumber - Item->Weight;
+        }
+
+        if (!SelectedItem)
+            return GetLootTierData(LootTierData);
+
+        return SelectedItem;
+    }
+
+    static FFortLootPackageData* GetLootPackage(std::vector<FFortLootPackageData*>& LootPackages)
+    {
+        float TotalWeight = 0;
+
+        for (auto Item : LootPackages)
+            TotalWeight += Item->Weight;
+
+        float RandomNumber = UKismetMathLibrary::RandomFloatInRange(0, TotalWeight); // is -1 needed?
+
+        FFortLootPackageData* SelectedItem = nullptr;
+
+        for (auto Item : LootPackages)
+        {
+            if (RandomNumber <= Item->Weight)
+            {
+                SelectedItem = Item;
+                break;
+            }
+
+            RandomNumber = RandomNumber - Item->Weight;
+        }
+
+        if (!SelectedItem)
+            return GetLootPackage(LootPackages);
+
+        return SelectedItem;
+    }
+
+    static bool PickLootDrops(FName& TierGroupName, int WorldLevel, int ForcedLootTier, std::vector<FFortItemEntry>& LootDrops)
+    {
+        static auto LTD = UObject::FindObject<UDataTable>("/Game/Items/Datatables/AthenaLootTierData_Client.AthenaLootTierData_Client"); // Cast<AFortGameStateAthena>(GetWorld()->GameState)->CurrentPlaylistInfo.BasePlaylist->LootTierData.Get();
+        static auto LP = UObject::FindObject<UDataTable>("/Game/Items/Datatables/AthenaLootPackages_Client.AthenaLootPackages_Client"); // Cast<AFortGameStateAthena>(GetWorld()->GameState)->CurrentPlaylistInfo.BasePlaylist->LootPackages.Get();
+
+        auto& LTDRowMap = LTD->RowMap;
+
+        std::vector<FFortLootTierData*> TierGroupLTDs;
+
+        auto LTDRowMapNum = LTDRowMap.Pairs.Elements.Num();
+        auto TierGroupStr = TierGroupName.ToString();
+
+        for (int i = 0; i < LTDRowMapNum; i++)
+        {
+            auto& CurrentLTD = LTDRowMap.Pairs.Elements[i].ElementData.Value;
+            auto TierData = (FFortLootTierData*)CurrentLTD.Value();
+
+            auto TierDataGroupStr = TierData->TierGroup.ToString();
+
+            // std::cout << "TierData->TierGroup.ToString(): " << TierDataGroupStr << '\n';
+
+            if (TierDataGroupStr == TierGroupStr)
+            {
+                TierGroupLTDs.push_back(TierData);
+            }
+        }
+
+        if (TierGroupLTDs.size() == 0)
+            return false;
+
+        FFortLootTierData* ChosenRowLootTierData = GetLootTierData(TierGroupLTDs);
+
+        if (!ChosenRowLootTierData)
+            return false;
+
+        float NumLootPackageDrops = ChosenRowLootTierData->NumLootPackageDrops;
+
+        auto& LPRowMap = LP->RowMap;
+
+        std::vector<FFortLootPackageData*> TierGroupLPs;
+
+        for (int i = 0; i < LPRowMap.Pairs.Elements.Num(); i++)
+        {
+            auto& CurrentLP = LPRowMap.Pairs.Elements[i].ElementData.Value;
+            auto LootPackage = (FFortLootPackageData*)CurrentLP.Value();
+
+            if (!LootPackage)
+                continue;
+
+            if (LootPackage->LootPackageID == ChosenRowLootTierData->LootPackage)
+            {
+                TierGroupLPs.push_back(LootPackage);
+            }
+        }
+
+        bool bIsWorldList = ChosenRowLootTierData->LootPackage.ToString().contains("WorldList");
+
+        LootDrops.reserve(NumLootPackageDrops);
+
+        for (int i = 0; i < NumLootPackageDrops; i++)
+        {
+            if (i >= TierGroupLPs.size())
+                break;
+
+            auto TierGroupLP = TierGroupLPs.at(i);
+            auto TierGroupLPStr = TierGroupLP->LootPackageCall.ToString();
+
+            std::vector<FFortLootPackageData*> lootPackageCalls;
+
+            for (int j = 0; j < LPRowMap.Pairs.Elements.Num(); j++)
+            {
+                auto& CurrentLP = LPRowMap.Pairs.Elements[j].ElementData.Value;
+
+                if (bIsWorldList)
+                {
+                    auto LootPackage = (FFortLootPackageData*)CurrentLP.Value();
+
+                    lootPackageCalls.push_back(LootPackage);
+                }
+                else
+                {
+                    auto LootPackage = (FFortLootPackageData*)CurrentLP.Value();
+
+                    if (LootPackage->LootPackageID.ToString() == TierGroupLPStr)
+                    {
+                        lootPackageCalls.push_back(LootPackage);
+                    }
+                }
+            }
+
+            if (lootPackageCalls.size() == 0)
+                continue;
+
+            FFortLootPackageData* LootPackageCall =  GetLootPackage(lootPackageCalls);
+
+            if (!LootPackageCall)
+                continue;
+
+            auto itemdef = LootPackageCall->ItemDefinition.Get();
+
+            if (!itemdef)
+                continue;
+
+            FFortItemEntry LootDropEntry;
+            LootDropEntry.ItemDefinition = itemdef;
+            LootDropEntry.Count = LootPackageCall->Count;
+
+            LootDrops.push_back(LootDropEntry);
+        }
+
+        return LootDrops.size() > 0;
     }
 }

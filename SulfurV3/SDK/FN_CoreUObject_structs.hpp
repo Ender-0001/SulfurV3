@@ -331,6 +331,36 @@ struct FVector
 	float                                              X;                                                        // 0x0000(0x0004) (Edit, BlueprintVisible, ZeroConstructor, SaveGame, IsPlainOldData, NoDestructor, HasGetValueTypeHash, NativeAccessSpecifierPublic)
 	float                                              Y;                                                        // 0x0004(0x0004) (Edit, BlueprintVisible, ZeroConstructor, SaveGame, IsPlainOldData, NoDestructor, HasGetValueTypeHash, NativeAccessSpecifierPublic)
 	float                                              Z;                                                        // 0x0008(0x0004) (Edit, BlueprintVisible, ZeroConstructor, SaveGame, IsPlainOldData, NoDestructor, HasGetValueTypeHash, NativeAccessSpecifierPublic)
+
+	FVector operator+(const FVector& A)
+	{
+		return FVector{ this->X + A.X, this->Y + A.Y, this->Z + A.Z };
+	}
+
+	FVector operator-(const FVector& A)
+	{
+		return FVector{ this->X - A.X, this->Y - A.Y, this->Z - A.Z };
+	}
+
+	FVector operator*(const float A)
+	{
+		return FVector{ this->X * A, this->Y * A, this->Z * A };
+	}
+
+	bool operator==(const FVector& A)
+	{
+		return X == A.X && Y == A.Y && Z == A.Z;
+	}
+
+	void operator+=(const FVector& A)
+	{
+		*this = *this + A;
+	}
+
+	void operator-=(const FVector& A)
+	{
+		*this = *this - A;
+	}
 };
 
 // ScriptStruct CoreUObject.Vector4
