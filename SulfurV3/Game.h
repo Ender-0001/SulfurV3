@@ -1,5 +1,6 @@
 #pragma once
 #include "framework.h"
+#include "Util.h"
 
 namespace Game
 {
@@ -27,6 +28,50 @@ namespace Game
 
 		GameMode->StartMatch();
 		GameMode->StartPlay();
+
+		auto SpawnIsland_FloorLoot = UObject::FindObject<UBlueprintGeneratedClass>("/Game/Athena/Environments/Blueprints/Tiered_Athena_FloorLoot_Warmup.Tiered_Athena_FloorLoot_Warmup_C");
+		auto BRIsland_FloorLoot = UObject::FindObject<UBlueprintGeneratedClass>("/Game/Athena/Environments/Blueprints/Tiered_Athena_FloorLoot_01.Tiered_Athena_FloorLoot_01_C");
+
+		TArray<AActor*> SpawnIsland_FloorLoot_Actors;
+		UGameplayStatics::GetAllActorsOfClass(GetWorld(), SpawnIsland_FloorLoot, &SpawnIsland_FloorLoot_Actors);
+
+		TArray<AActor*> BRIsland_FloorLoot_Actors;
+		UGameplayStatics::GetAllActorsOfClass(GetWorld(), BRIsland_FloorLoot, &BRIsland_FloorLoot_Actors);
+
+		auto SpawnIslandTierGroup = UKismetStringLibrary::Conv_StringToName(L"Loot_AthenaFloorLoot_Warmup");
+		auto BRIslandTierGroup = UKismetStringLibrary::Conv_StringToName(L"Loot_AthenaFloorLoot");
+
+		for (int i = 0; i < SpawnIsland_FloorLoot_Actors.Num(); i++)
+		{
+			ABuildingContainer* CurrentActor = (ABuildingContainer*)SpawnIsland_FloorLoot_Actors[i];
+
+			auto Location = CurrentActor->K2_GetActorLocation();
+			Location.Z += 50;
+
+			std::vector<FFortItemEntry> LootDrops;
+
+			if (Util::PickLootDrops(SpawnIslandTierGroup, 1, -1, LootDrops))
+			{
+				for (auto& LootDrop : LootDrops)
+					Inventory::SpawnPickup(LootDrop, Location, EFortPickupSourceTypeFlag::FloorLoot);
+			}
+		}
+
+		for (int i = 0; i < BRIsland_FloorLoot_Actors.Num(); i++)
+		{
+			ABuildingContainer* CurrentActor = (ABuildingContainer*)BRIsland_FloorLoot_Actors[i];
+
+			auto Location = CurrentActor->K2_GetActorLocation();
+			Location.Z += 50;
+
+			std::vector<FFortItemEntry> LootDrops;
+
+			if (Util::PickLootDrops(BRIslandTierGroup, 1, -1, LootDrops))
+			{
+				for (auto& LootDrop : LootDrops)
+					Inventory::SpawnPickup(LootDrop, Location, EFortPickupSourceTypeFlag::FloorLoot);
+			}
+		}
 	}
 
 	static void Listen()
@@ -536,11 +581,19 @@ namespace Game
 
 					auto CorrectLocation = BuildingContainer->K2_GetActorLocation() + BuildingContainer->GetActorRightVector() * 70.0f + FVector{ 0, 0, 50 };
 
+					EFortPickupSpawnSource SpawnSource = EFortPickupSpawnSource::Unset;
+
 					if (SearchLootTierGroup.ToString() == "Loot_Treasure") // Very bad, we should probably do a loop of all chests and ammo boxes and fix their SearchLootTierGroup.
+					{
 						SearchLootTierGroup = UKismetStringLibrary::Conv_StringToName(L"Loot_AthenaTreasure");
+						SpawnSource = EFortPickupSpawnSource::Chest;
+					}
 
 					if (SearchLootTierGroup.ToString() == "Loot_Ammo")
+					{
 						SearchLootTierGroup = UKismetStringLibrary::Conv_StringToName(L"Loot_AthenaAmmoLarge");
+						SpawnSource = EFortPickupSpawnSource::AmmoBox;
+					}
 
 					if (Util::PickLootDrops(SearchLootTierGroup, -1, 1, LootDrops))
 					{
@@ -549,9 +602,7 @@ namespace Game
 						BuildingContainer->OnLoot();
 
 						for (auto& LootDrop : LootDrops)
-						{
-							Inventory::SpawnPickup(LootDrop, CorrectLocation);
-						}
+							Inventory::SpawnPickup(LootDrop, CorrectLocation, EFortPickupSourceTypeFlag::Container, SpawnSource);
 					}
 				}
 			}

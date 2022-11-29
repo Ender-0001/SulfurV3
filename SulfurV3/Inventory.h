@@ -183,6 +183,7 @@ namespace Inventory
 		}
 
 		ItemInstance = (UFortWorldItem*)ItemDef->CreateTemporaryItemInstanceBP(Count, 1);
+
 		if (ItemInstance)
 		{
 			ItemInstance->ItemEntry.Count = Count;
@@ -196,6 +197,8 @@ namespace Inventory
 
 			return ItemInstance->ItemEntry.ItemGuid;
 		}
+
+		return FGuid();
 	}
 
 	static bool IsPrimaryQuickbar(UFortItemDefinition* ItemDefinition)
@@ -284,7 +287,6 @@ namespace Inventory
 	{
 		auto Pickup = SpawnPickup(ItemEntry.ItemDefinition, Location, ItemEntry.Count, PickupSource, SpawnSource);
 		Pickup->PrimaryPickupItemEntry.LoadedAmmo = ItemEntry.LoadedAmmo;
-		Pickup->PrimaryPickupItemEntry.ItemDefinition->Rarity = ItemEntry.ItemDefinition->Rarity;
 		Pickup->OnRep_PrimaryPickupItemEntry();
 		return Pickup;
 	}

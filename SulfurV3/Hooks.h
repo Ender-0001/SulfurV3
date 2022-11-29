@@ -20,6 +20,9 @@ namespace Hooks
 		TArray<AActor*> Actors;
 		UGameplayStatics::GetAllActorsOfClass(GetWorld(), AFortPlayerStartWarmup::StaticClass(), &Actors);
 
+		if (Actors.IsEmpty())
+			return false;
+
 		static bool bLoadedPlaylist = false;
 
 		if (!bLoadedPlaylist)

@@ -243,6 +243,24 @@ namespace Util
         return SelectedItem;
     }
 
+    static int GetClipSize(UFortWeaponItemDefinition* WeaponDef)
+    {
+        if (!WeaponDef)
+            return 0;
+
+        auto Table = WeaponDef->WeaponStatHandle.DataTable;
+
+        if (!Table)
+            return 0;
+
+        auto Row = (FFortRangedWeaponStats*)Table->RowMap[WeaponDef->WeaponStatHandle.RowName];
+
+        if (!Row)
+            return 0;
+
+        return Row->ClipSize;
+    }
+
     static bool PickLootDrops(FName& TierGroupName, int WorldLevel, int ForcedLootTier, std::vector<FFortItemEntry>& LootDrops)
     {
         static auto LTD = UObject::FindObject<UDataTable>("/Game/Items/Datatables/AthenaLootTierData_Client.AthenaLootTierData_Client"); // Cast<AFortGameStateAthena>(GetWorld()->GameState)->CurrentPlaylistInfo.BasePlaylist->LootTierData.Get();
@@ -341,13 +359,14 @@ namespace Util
             if (!LootPackageCall)
                 continue;
 
-            auto itemdef = LootPackageCall->ItemDefinition.Get();
+            auto ItemDef = LootPackageCall->ItemDefinition.Get();
 
-            if (!itemdef)
+            if (!ItemDef)
                 continue;
 
-            FFortItemEntry LootDropEntry;
-            LootDropEntry.ItemDefinition = itemdef;
+            FFortItemEntry LootDropEntry{};
+            LootDropEntry.ItemDefinition = ItemDef;
+            LootDropEntry.LoadedAmmo = GetClipSize(Cast<UFortWeaponItemDefinition>(ItemDef));
             LootDropEntry.Count = LootPackageCall->Count;
 
             LootDrops.push_back(LootDropEntry);
