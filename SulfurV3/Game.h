@@ -21,6 +21,7 @@ namespace Game
 		Cast<AFortGameSessionDedicatedAthena>(GameMode->GameSession)->ReservationBeaconHost = GetWorld()->SpawnActor<AFortPartyBeaconHost>({}, {});
 		Cast<AFortGameSessionDedicatedAthena>(GameMode->GameSession)->CurrentSessionParams.ControllerId = 1;
 		Cast<AFortGameSessionDedicatedAthena>(GameMode->GameSession)->ReservationBeaconHost->State = (UFortPartyBeaconState*)UGameplayStatics::SpawnObject(UFortPartyBeaconState::StaticClass(), Cast<AFortGameSessionDedicatedAthena>(GameMode->GameSession)->ReservationBeaconHost);
+		Cast<AFortGameSessionDedicatedAthena>(GameMode->GameSession)->ReservationBeaconHost->State->NumPlayersPerTeam = GameState->CurrentPlaylistInfo.BasePlaylist->MaxSquadSize;
 	}
 
 	static void Start()
@@ -159,14 +160,6 @@ namespace Game
 
 			Native::GiveAbility(PlayerState->AbilitySystemComponent, &Handle, Spec);
 		}
-
-		auto State = Cast<AFortGameSessionDedicatedAthena>(GameMode->GameSession)->ReservationBeaconHost->State;
-		State->NumPlayersPerTeam = GameState->CurrentPlaylistInfo.BasePlaylist->MaxSquadSize;
-
-		FPartyReservation Reservation{};
-		Reservation.PartyLeader = PlayerState->UniqueId;
-
-		State->Reservations.Add(Reservation);
 	}
 
 	static void ServerAcknowledgePossessionHook(APlayerController* PlayerController, APawn* P)
