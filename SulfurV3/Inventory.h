@@ -4,12 +4,15 @@ namespace Inventory
 {
 	static void Update(AFortPlayerControllerAthena* PlayerController)
 	{
-		PlayerController->WorldInventory->HandleInventoryLocalUpdate();
-		PlayerController->HandleWorldInventoryLocalUpdate();
-		PlayerController->ClientForceUpdateQuickbar(EFortQuickBars::Primary);
-		PlayerController->ClientForceUpdateQuickbar(EFortQuickBars::Secondary);
+		if (PlayerController->WorldInventory)
+		{
+			PlayerController->WorldInventory->HandleInventoryLocalUpdate();
+			PlayerController->HandleWorldInventoryLocalUpdate();
+			PlayerController->ClientForceUpdateQuickbar(EFortQuickBars::Primary);
+			PlayerController->ClientForceUpdateQuickbar(EFortQuickBars::Secondary);
 
-		PlayerController->WorldInventory->Inventory.MarkArrayDirty();
+			PlayerController->WorldInventory->Inventory.MarkArrayDirty();
+		}
 	}
 
 	static UFortWorldItem* FindItemInstance(AFortPlayerControllerAthena* PlayerController, UFortItemDefinition* ItemDef)

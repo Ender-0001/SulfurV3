@@ -354,7 +354,7 @@ namespace Util
             if (lootPackageCalls.size() == 0)
                 continue;
 
-            FFortLootPackageData* LootPackageCall =  GetLootPackage(lootPackageCalls);
+            FFortLootPackageData* LootPackageCall = GetLootPackage(lootPackageCalls);
 
             if (!LootPackageCall)
                 continue;
@@ -365,6 +365,7 @@ namespace Util
                 continue;
 
             FFortItemEntry LootDropEntry{};
+
             LootDropEntry.ItemDefinition = ItemDef;
             LootDropEntry.LoadedAmmo = GetClipSize(Cast<UFortWeaponItemDefinition>(ItemDef));
             LootDropEntry.Count = LootPackageCall->Count;
