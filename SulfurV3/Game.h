@@ -16,12 +16,6 @@ namespace Game
 
 		GameState->CurrentPlaylistInfo.PlaylistReplicationKey++;
 		GameState->CurrentPlaylistInfo.MarkArrayDirty();
-
-		GameMode->GameSession = GetWorld()->SpawnActor<AFortGameSessionDedicatedAthena>({}, {});
-		Cast<AFortGameSessionDedicatedAthena>(GameMode->GameSession)->ReservationBeaconHost = GetWorld()->SpawnActor<AFortPartyBeaconHost>({}, {});
-		Cast<AFortGameSessionDedicatedAthena>(GameMode->GameSession)->CurrentSessionParams.ControllerId = 1;
-		Cast<AFortGameSessionDedicatedAthena>(GameMode->GameSession)->ReservationBeaconHost->State = (UFortPartyBeaconState*)UGameplayStatics::SpawnObject(UFortPartyBeaconState::StaticClass(), Cast<AFortGameSessionDedicatedAthena>(GameMode->GameSession)->ReservationBeaconHost);
-		Cast<AFortGameSessionDedicatedAthena>(GameMode->GameSession)->ReservationBeaconHost->State->NumPlayersPerTeam = GameState->CurrentPlaylistInfo.BasePlaylist->MaxSquadSize;
 	}
 
 	static void Start()
@@ -691,47 +685,6 @@ namespace Game
 		Native::OnDamageServer(BuildingActor, Damage, DamageTags, Momentum, HitInfo, InstigatedBy, DamageCauser, EffectContext);
 	}
 
-	static char GetTeamIndexHook(__int64 GameSession, __int64 UniqueID)
-	{
-		int v4; // edi
-		__int64 World; // rax
-		__int64 GameMode; // rax
-		char v7; // si
-		char result; // al
-
-		if (!*(__int64*)(GameSession + 0x288))
-			return 0;
-
-		printf("Passed 1\n");
-
-		if (!(*(unsigned __int8(__fastcall**)(__int64))(*(__int64*)UniqueID + 32))(UniqueID))
-			return 0;
-
-		printf("Passed 2\n");
-
-		v4 = 0;
-		if (v4 == -1)
-			return 0;
-
-		printf("Passed 3: %llx\n", __int64(Cast<AFortGameSessionDedicatedAthena>(Cast<AFortGameModeAthena>(GetWorld()->AuthorityGameMode)->GameSession)->ReservationBeaconHost));
-
-		if ((*(__int64(__fastcall**)(__int64))(*(__int64*)GameSession + 320i64))(GameSession)
-			&& (World = (*(__int64(__fastcall**)(__int64))(*(__int64*)GameSession + 320i64))(GameSession),
-				(GameMode = __int64(((UWorld*)World)->AuthorityGameMode)) != 0))
-		{
-			v7 = (*(__int64(__fastcall**)(__int64))(*(__int64*)GameMode + 2912))(GameMode);// GetDefaultTeam
-		}
-		else
-		{
-			v7 = 1;
-		}
-		if ((*(int(__fastcall**)(__int64))(**(__int64**)(*(__int64*)(GameSession + 0x288) + 0x240i64) + 0x2D0i64))(*(__int64*)(*(__int64*)(GameSession + 0x288) + 0x240i64)) > 1)
-			result = v7 + v4;
-		else
-			result = v7;
-		return result;
-	}
-
 	static void Init()
 	{
 		auto DefaultFortPCAthena = UObject::FindObject<AFortPlayerControllerAthena>("/Game/Athena/Athena_PlayerController.Default__Athena_PlayerController_C");
@@ -755,6 +708,5 @@ namespace Game
 		CREATE_HOOK(RestartPlayerAtPlayerStartHook, Native::RestartPlayerAtPlayerStart);
 		CREATE_HOOK(ServerAttemptInteractHook, Native::ServerAttemptInteract);
 		CREATE_HOOK(OnDamageServerHook, Native::OnDamageServer);
-		//CREATE_HOOK(GetTeamIndexHook, Native::GetTeamIndex);
 	}
 }
